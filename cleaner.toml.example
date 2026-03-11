@@ -1,0 +1,177 @@
+# cleaner.toml — Example configuration file for cli-folder-cleaner
+#
+# Copy this file to your target directory as `cleaner.toml` and adjust the
+# rules to fit your needs.
+#
+# Rules are evaluated TOP TO BOTTOM. The FIRST matching rule wins.
+# All conditions within a rule are combined with logical AND.
+
+# ── Global settings ───────────────────────────────────────────────────────────
+[settings]
+
+# Set to true to also scan sub-directories (default: false).
+recursive = false
+
+# Any file that does not match any rule will be moved here (relative to the
+# target directory). Comment out or remove to leave unmatched files in place.
+# unmatched_destination = "_Unsorted"
+
+# Global ignore list: filenames or glob patterns (matched against the filename
+# only) that are excluded from every rule. The config file itself (cleaner.toml)
+# is always ignored automatically, even without this setting.
+# Supports * (any characters) and ? (single character).
+ignore = [
+    ".DS_Store",     # macOS metadata files
+    "Thumbs.db",     # Windows thumbnail cache
+    "desktop.ini",   # Windows folder settings
+    "*.lnk",         # Windows shortcuts
+    ".gitkeep",      # common empty-directory placeholder
+]
+
+
+# ── Rules ─────────────────────────────────────────────────────────────────────
+# Each [[rules]] block defines one rule.
+#
+# Available fields:
+#   name            (required) Human-readable label shown in CLI output.
+#   destination     (required) Target sub-folder, relative to the target dir.
+#                              Nested paths like "Documents/PDFs" are supported.
+#   extensions      (optional) List of file extensions to match (case-insensitive,
+#                              no leading dot). E.g. ["jpg", "PNG"] both work.
+#   name_pattern    (optional) Glob pattern matched against the file name only.
+#                              Supports * (any chars) and ? (single char).
+#   min_size_mb     (optional) Minimum file size in megabytes (inclusive).
+#   max_size_mb     (optional) Maximum file size in megabytes (inclusive).
+
+# ── Images ────────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Images"
+destination = "Images"
+extensions  = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff", "tif", "svg", "ico", "heic", "heif"]
+
+# ── Raw photo files (camera RAW) ──────────────────────────────────────────────
+[[rules]]
+name        = "RAW Photos"
+destination = "Images/RAW"
+extensions  = ["raw", "cr2", "cr3", "nef", "arw", "orf", "rw2", "dng"]
+
+# ── Videos ────────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Videos"
+destination = "Videos"
+extensions  = ["mp4", "mkv", "mov", "avi", "wmv", "flv", "webm", "m4v", "mpeg", "mpg"]
+
+# ── Large videos (> 500 MB) — matched BEFORE the generic Videos rule ──────────
+# Note: because rules are evaluated top-to-bottom, place more specific rules
+# (like this one) ABOVE more general ones (like "Videos" above) if needed.
+# In this example the order is intentional: small/medium videos go to Videos/,
+# large ones would need this rule placed BEFORE the generic Videos rule above.
+# Uncomment and reorder to activate:
+#
+# [[rules]]
+# name        = "Large Videos"
+# destination = "Videos/Large"
+# extensions  = ["mp4", "mkv", "mov", "avi"]
+# min_size_mb = 500.0
+
+# ── Audio ─────────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Audio"
+destination = "Audio"
+extensions  = ["mp3", "flac", "wav", "aac", "ogg", "m4a", "wma", "aiff", "opus"]
+
+# ── PDF documents ─────────────────────────────────────────────────────────────
+[[rules]]
+name        = "PDFs"
+destination = "Documents/PDFs"
+extensions  = ["pdf"]
+
+# ── Invoices — matched by name pattern (must come before the generic Docs rule) ──
+[[rules]]
+name         = "Invoices"
+destination  = "Documents/Invoices"
+name_pattern = "invoice_*"
+
+# ── Reports — matched by name pattern ─────────────────────────────────────────
+[[rules]]
+name         = "Reports"
+destination  = "Documents/Reports"
+name_pattern = "report_*"
+
+# ── Office / text documents ───────────────────────────────────────────────────
+# The per-rule ignore list prevents specific files from being moved by this rule
+# even if they match the extensions. Files listed here are simply left in place
+# (or can be picked up by a later rule if one applies).
+[[rules]]
+name        = "Documents"
+destination = "Documents"
+extensions  = ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "rtf", "txt", "md", "csv"]
+ignore      = ["README.md", "CHANGELOG.md", "LICENSE", "*.bak"]
+
+# ── Archives ──────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Archives"
+destination = "Archives"
+extensions  = ["zip", "tar", "gz", "bz2", "xz", "7z", "rar", "tgz", "zst"]
+
+# ── Disk images ───────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Disk Images"
+destination = "Archives/DiskImages"
+extensions  = ["iso", "img", "dmg", "bin", "nrg"]
+
+# ── Code / developer files ────────────────────────────────────────────────────
+[[rules]]
+name        = "Code"
+destination = "Code"
+extensions  = ["rs", "py", "js", "ts", "go", "c", "cpp", "h", "hpp", "java", "kt", "swift", "rb", "php", "sh", "bash", "zsh", "fish", "ps1", "lua", "r", "jl"]
+
+# ── Configuration / data files ────────────────────────────────────────────────
+[[rules]]
+name        = "Config & Data"
+destination = "Code/Config"
+extensions  = ["json", "toml", "yaml", "yml", "xml", "ini", "env", "conf", "cfg"]
+
+# ── Fonts ─────────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Fonts"
+destination = "Fonts"
+extensions  = ["ttf", "otf", "woff", "woff2", "eot"]
+
+# ── Executables & installers ──────────────────────────────────────────────────
+[[rules]]
+name        = "Installers"
+destination = "Installers"
+extensions  = ["exe", "msi", "pkg", "deb", "rpm", "appimage"]
+
+# ── Ebooks ────────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Ebooks"
+destination = "Books"
+extensions  = ["epub", "mobi", "azw", "azw3", "fb2", "djvu"]
+
+# ── 3D / CAD files ────────────────────────────────────────────────────────────
+[[rules]]
+name        = "3D Models"
+destination = "3D"
+extensions  = ["stl", "obj", "fbx", "gltf", "glb", "blend", "3ds", "step", "stp", "iges"]
+
+# ── Torrent files ─────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Torrents"
+destination = "Torrents"
+extensions  = ["torrent"]
+
+# ── Subtitles ─────────────────────────────────────────────────────────────────
+[[rules]]
+name        = "Subtitles"
+destination = "Videos/Subtitles"
+extensions  = ["srt", "sub", "ass", "ssa", "vtt"]
+
+# ── Small scratch / temporary files (< 1 KB) ──────────────────────────────────
+# Useful to quarantine tiny leftover files.
+[[rules]]
+name        = "Tiny Files"
+destination = "_Tiny"
+max_size_mb = 0.001
+extensions  = ["tmp", "log", "bak", "old", "cache"]
