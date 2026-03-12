@@ -92,8 +92,8 @@ Each template is a standard `cleaner.toml`-compatible TOML file and can be edite
 ### Installation
 
 ```sh
-git clone https://github.com/rricol/cli-folder-cleaner.git
-cd cli-folder-cleaner
+git clone https://github.com/rricol/drust-cleaner.git
+cd drust-cleaner
 cargo install --path crates/cleaner-cli
 ```
 

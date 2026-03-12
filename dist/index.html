@@ -1420,6 +1420,23 @@
             footer a:hover {
                 color: var(--text);
             }
+
+            #update-badge {
+                display: none;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: var(--yellow);
+                background: rgba(255,193,7,0.1);
+                border: 1px solid rgba(255,193,7,0.35);
+                border-radius: 4px;
+                padding: 2px 8px;
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            #update-badge.visible { display: flex; }
+            #update-badge:hover { background: rgba(255,193,7,0.18); }
         </style>
     </head>
     <body>
@@ -1661,11 +1678,8 @@
 
         <footer>
             <span>Drust Cleaner v1.0.0</span>
-            <a
-                href="https://github.com/rricol/cli-folder-cleaner"
-                target="_blank"
-                >github ↗</a
-            >
+            <button id="update-badge" title="Click to install update">⬆ Update available</button>
+            <a href="https://github.com/rricol/drust-cleaner" target="_blank">github ↗</a>
         </footer>
 
         <script>
@@ -2788,6 +2802,39 @@
                     btnTmplSave.disabled = false;
                 }
             });
+
+            // ── Auto-updater ────────────────────────────────────────────────
+            const updateBadge = document.getElementById("update-badge");
+            let pendingUpdateVersion = null;
+
+            async function checkForUpdate() {
+                try {
+                    const update = await invoke("check_update");
+                    if (update) {
+                        pendingUpdateVersion = update.version;
+                        updateBadge.title = `v${update.version} available — click to install`;
+                        updateBadge.classList.add("visible");
+                    }
+                } catch (_) {
+                    // Silently ignore — no network, no release yet, etc.
+                }
+            }
+
+            updateBadge.addEventListener("click", async () => {
+                if (!pendingUpdateVersion) return;
+                updateBadge.textContent = "⬇ Installing…";
+                updateBadge.style.pointerEvents = "none";
+                try {
+                    await invoke("install_update");
+                } catch (e) {
+                    updateBadge.textContent = "⬆ Update available";
+                    updateBadge.style.pointerEvents = "";
+                    setConfigStatus(`Update failed: ${e}`, "err");
+                }
+            });
+
+            // Check after a short delay to not block startup
+            setTimeout(checkForUpdate, 3000);
         </script>
     </body>
 </html>

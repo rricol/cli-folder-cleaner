@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 
 use cleaner_core::{config, engine};
 
@@ -12,6 +13,50 @@ pub struct CleanResult {
     pub messages: Vec<String>,
     pub moved: usize,
     pub errors: usize,
+}
+
+/// Info about an available update returned to the frontend.
+#[derive(Serialize)]
+pub struct UpdateInfo {
+    pub version: String,
+    pub body: Option<String>,
+}
+
+/// Check whether a newer version is available.
+/// Returns Some(UpdateInfo) if an update exists, None if already up to date.
+#[tauri::command]
+pub async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(update.map(|u| UpdateInfo {
+        version: u.version.clone(),
+        body: u.body.clone(),
+    }))
+}
+
+/// Download and install the latest update, then restart the app.
+#[tauri::command]
+pub async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if let Some(update) = update {
+        update
+            .download_and_install(|_, _| {}, || {})
+            .await
+            .map_err(|e| e.to_string())?;
+        app.restart();
+    }
+    Ok(())
 }
 
 /// Open `folder_path` in the system file manager (Finder / Explorer / xdg-open).
