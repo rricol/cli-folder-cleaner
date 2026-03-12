@@ -37,11 +37,12 @@
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 14px 24px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
+      height: 54px;
     }
 
     header svg { flex-shrink: 0; }
@@ -50,17 +51,43 @@
       font-size: 1.15rem;
       font-weight: 600;
       letter-spacing: 0.02em;
+      flex: 1;
     }
 
-    /* ── Main content ── */
-    main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
+    /* ── Tab nav ── */
+    .tab-nav {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
+      gap: 2px;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
     }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+    /* ── Views ── */
+    #view-cleaner, #view-templates {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #view-cleaner.active  { display: flex; flex-direction: column; overflow-y: auto; }
+    #view-templates.active { display: flex; }
 
     /* ── Cards ── */
     .card {
@@ -77,6 +104,12 @@
       letter-spacing: 0.08em;
       color: var(--text-dim);
       margin-bottom: 14px;
+    }
+
+    /* ── Cleaner view ── */
+    #view-cleaner {
+      padding: 24px;
+      gap: 20px;
     }
 
     /* ── Folder picker ── */
@@ -124,6 +157,10 @@
     .btn-outline   { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-green     { background: var(--green); color: #fff; }
     .btn-yellow    { background: var(--yellow); color: #1a1a2e; }
+    .btn-danger    { background: var(--red); color: #fff; }
+
+    .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+    .btn-xs { padding: 3px 8px;  font-size: 0.72rem; }
 
     /* ── Status banner ── */
     #status-banner {
@@ -145,12 +182,7 @@
     #status-text { flex: 1; }
 
     /* ── Action buttons row ── */
-    #actions {
-      display: none;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
+    #actions { display: none; gap: 12px; flex-wrap: wrap; }
     #actions.visible { display: flex; }
 
     /* ── Log area ── */
@@ -171,7 +203,7 @@
       word-break: break-all;
     }
 
-    .log-line { display: block; }
+    .log-line    { display: block; }
     .log-moved   { color: var(--green); }
     .log-dryrun  { color: var(--cyan); }
     .log-error   { color: var(--red); }
@@ -179,30 +211,11 @@
     .log-default { color: var(--text-dim); }
 
     /* ── Summary bar ── */
-    #summary {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
+    #summary { display: flex; gap: 20px; flex-wrap: wrap; }
 
-    .stat {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .stat-label {
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
+    .stat { display: flex; flex-direction: column; gap: 2px; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; }
+    .stat-label { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
     .stat-value.green  { color: var(--green); }
     .stat-value.red    { color: var(--red); }
     .stat-value.yellow { color: var(--yellow); }
@@ -210,8 +223,7 @@
     /* ── Spinner ── */
     .spinner {
       display: inline-block;
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,0.2);
       border-top-color: #fff;
       border-radius: 50%;
@@ -221,6 +233,620 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Templates card (cleaner view) ── */
+    #templates-card { display: none; flex-direction: column; }
+    #templates-card.visible { display: flex; }
+
+    #template-save-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+
+    #template-name-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.88rem;
+    }
+
+    #template-name-input::placeholder { color: var(--text-dim); }
+    #template-name-input:focus { outline: none; border-color: var(--accent2); }
+
+    #template-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 12px; }
+
+    #template-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .template-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .template-item-name { flex: 1; font-size: 0.88rem; color: var(--text); }
+
+    #template-empty { font-size: 0.85rem; color: var(--text-dim); text-align: center; padding: 10px 0; }
+
+    /* ── Modal ── */
+    #modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modal-backdrop.visible { display: flex; }
+
+    #modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: min(540px, 90vw);
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #modal-title { font-size: 0.95rem; font-weight: 600; }
+
+    #modal-close {
+      background: none; border: none;
+      color: var(--text-dim); font-size: 1.2rem;
+      cursor: pointer; line-height: 1;
+      padding: 2px 6px; border-radius: 4px;
+    }
+
+    #modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+    #modal-body {
+      overflow-y: auto;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-section-title {
+      font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-dim); margin-bottom: 8px;
+    }
+
+    .modal-settings { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .modal-tag {
+      font-size: 0.78rem; padding: 3px 9px; border-radius: 4px;
+      background: rgba(255,255,255,0.07); color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+
+    .modal-tag.on { background: rgba(76,175,80,0.15); color: var(--green); border-color: var(--green); }
+
+    .rule-row {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 14px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+
+    .rule-row-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .rule-name  { font-size: 0.88rem; font-weight: 600; }
+    .rule-dest  { font-size: 0.78rem; color: var(--cyan); }
+    .rule-ext-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+
+    .ext-chip {
+      font-size: 0.72rem; padding: 2px 7px; border-radius: 3px;
+      background: rgba(83,52,131,0.35); color: #c8b8f0;
+      border: 1px solid var(--accent2); font-family: monospace;
+    }
+
+    .rule-meta { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* ════════════════════════════════════════════════════════════
+       TEMPLATES MANAGEMENT PAGE
+       ════════════════════════════════════════════════════════════ */
+
+    /* Sidebar */
+    #tmpl-sidebar {
+      width: 220px;
+      min-width: 220px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+    }
+
+    #tmpl-sidebar-header {
+      padding: 16px 16px 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #tmpl-sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .tmpl-sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+      border: 1px solid transparent;
+    }
+
+    .tmpl-sidebar-item:hover { background: rgba(255,255,255,0.05); }
+    .tmpl-sidebar-item.active { background: rgba(83,52,131,0.3); border-color: var(--accent2); }
+
+    .tmpl-sidebar-item-name {
+      flex: 1;
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tmpl-sidebar-action {
+      background: none; border: none;
+      color: var(--text-dim); font-size: 0.85rem;
+      cursor: pointer; padding: 2px 4px;
+      border-radius: 3px; line-height: 1;
+      flex-shrink: 0;
+      display: none;
+    }
+
+    .tmpl-sidebar-item:hover .tmpl-sidebar-action { display: block; }
+    .tmpl-sidebar-delete:hover { color: var(--red);  background: rgba(244,67,54,0.15); }
+    .tmpl-sidebar-dupe:hover   { color: var(--cyan); background: rgba(0,188,212,0.12); }
+
+    #tmpl-sidebar-footer {
+      padding: 10px 8px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #btn-new-template {
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: none;
+      border: 1px dashed var(--border);
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    #btn-new-template:hover { border-color: var(--accent2); color: var(--text); }
+
+    /* Editor panel */
+    #tmpl-editor {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    #tmpl-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+
+    #tmpl-form { display: none; flex-direction: column; gap: 18px; }
+    #tmpl-form.visible { display: flex; }
+
+    /* Name row */
+    #tmpl-name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #tmpl-name-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    #tmpl-name-input::placeholder { color: var(--text-dim); font-weight: 400; }
+    #tmpl-name-input:focus { outline: none; border-color: var(--accent2); }
+
+    #tmpl-dirty-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--yellow);
+      flex-shrink: 0;
+      display: none;
+    }
+
+    #tmpl-dirty-dot.visible { display: block; }
+
+    /* Settings section */
+    #tmpl-settings-card .card-title { margin-bottom: 10px; }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: var(--accent2);
+      cursor: pointer;
+    }
+
+    .settings-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .settings-field input[type="text"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      width: 160px;
+    }
+
+    .settings-field input[type="text"]:focus { outline: none; border-color: var(--accent2); }
+
+    /* Rules section */
+    #tmpl-rules-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #tmpl-rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Rule editor card */
+    .rule-editor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .rule-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 10px 8px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rule-order-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      flex-shrink: 0;
+    }
+
+    .rule-order-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .rule-order-btn::before {
+      content: "";
+      display: block;
+      width: 5px;
+      height: 5px;
+      border-right: 1.5px solid currentColor;
+      border-top: 1.5px solid currentColor;
+      flex-shrink: 0;
+    }
+
+    .rule-order-btn[data-dir="up"]::before   { transform: rotate(-45deg) translate(1px, 1px); }
+    .rule-order-btn[data-dir="down"]::before { transform: rotate(135deg) translate(-1px, -1px); }
+
+    .rule-order-btn:hover:not(:disabled) { color: var(--text); background: rgba(255,255,255,0.08); }
+    .rule-order-btn:disabled { opacity: 0.2; cursor: default; }
+
+    .rule-card-header input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 10px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .rule-card-header input[type="text"]:focus { outline: none; border-color: var(--accent2); }
+    .rule-card-header input[type="text"]::placeholder { color: var(--text-dim); font-weight: 400; }
+
+    .rule-arrow { color: var(--text-dim); font-size: 0.85rem; flex-shrink: 0; }
+
+    .rule-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    .rule-field-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .rule-field-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      min-width: 78px;
+      padding-top: 6px;
+    }
+
+    /* Extension chip input */
+    .ext-input-wrap {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px;
+      min-height: 34px;
+      cursor: text;
+    }
+
+    .ext-input-wrap:focus-within { border-color: var(--accent2); }
+
+    .ext-chip-editor {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(83,52,131,0.4);
+      color: #c8b8f0;
+      border: 1px solid var(--accent2);
+      font-family: monospace;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: default;
+    }
+
+    .ext-chip-remove {
+      background: none; border: none;
+      color: #c8b8f0; font-size: 0.8rem;
+      cursor: pointer; padding: 0; line-height: 1;
+      opacity: 0.7;
+    }
+
+    .ext-chip-remove:hover { opacity: 1; }
+
+    .ext-text-input {
+      background: none; border: none;
+      color: var(--text); font-family: monospace;
+      font-size: 0.82rem; outline: none;
+      min-width: 60px; flex: 1;
+      padding: 2px 0;
+    }
+
+    .ext-text-input::placeholder { color: var(--text-dim); }
+
+    /* Optional filters */
+    .rule-optional {
+      border: none;
+      padding: 0;
+    }
+
+    .rule-optional summary {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .rule-optional summary::before {
+      content: "▸";
+      font-size: 0.7rem;
+      transition: transform 0.15s;
+    }
+
+    .rule-optional[open] summary::before { transform: rotate(90deg); }
+
+    .rule-optional-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .rule-opt-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .rule-opt-label {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      min-width: 100px;
+    }
+
+    .rule-opt-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 10px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      width: 160px;
+    }
+
+    .rule-opt-input:focus { outline: none; border-color: var(--accent2); }
+
+    /* ── Tooltip ── */
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      font-size: 0.65rem;
+      font-weight: 700;
+      cursor: default;
+      position: relative;
+      flex-shrink: 0;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    .info-icon::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0d0d1a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 11px;
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.5;
+      white-space: normal;
+      width: 240px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    /* small arrow */
+    .info-icon::before {
+      content: "";
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--border);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 51;
+    }
+
+    .info-icon:hover::after,
+    .info-icon:hover::before { opacity: 1; }
+
+    /* Ignore chips use a red tint to signal "exclusion" */
+    .ignore-chip {
+      background: rgba(244,67,54,0.15) !important;
+      color: #f4a4a4 !important;
+      border-color: rgba(244,67,54,0.5) !important;
+    }
+
+    .ignore-chip .ext-chip-remove { color: #f4a4a4 !important; }
+
+    /* Rule delete btn */
+    .rule-delete-btn {
+      background: none; border: none;
+      color: var(--text-dim); font-size: 1rem;
+      cursor: pointer; padding: 3px 5px;
+      border-radius: 4px; line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .rule-delete-btn:hover { color: var(--red); background: rgba(244,67,54,0.12); }
+
+    /* Editor status line */
+    #tmpl-status {
+      font-size: 0.82rem;
+      padding: 2px 0;
+      min-height: 1.2em;
+    }
+
+    #tmpl-status.ok    { color: var(--green); }
+    #tmpl-status.err   { color: var(--red); }
   </style>
 </head>
 <body>
@@ -232,9 +858,14 @@
     <line x1="12" y1="11" x2="12" y2="17"/>
   </svg>
   <h1>Folder Cleaner</h1>
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-view="cleaner">Cleaner</button>
+    <button class="tab-btn"        data-view="templates">Templates</button>
+  </nav>
 </header>
 
-<main>
+<!-- ══════════════ CLEANER VIEW ══════════════ -->
+<div id="view-cleaner" class="active">
 
   <!-- Folder picker card -->
   <div class="card">
@@ -245,7 +876,7 @@
     </div>
   </div>
 
-  <!-- Status banner (config found / not found / errors) -->
+  <!-- Status banner -->
   <div id="status-banner">
     <span id="status-icon">ℹ</span>
     <span id="status-text"></span>
@@ -256,6 +887,19 @@
     <button class="btn btn-outline" id="btn-generate" style="display:none">Generate Default Config</button>
     <button class="btn btn-yellow"  id="btn-dry"      style="display:none">Dry Run</button>
     <button class="btn btn-green"   id="btn-run"      style="display:none">Run Now</button>
+  </div>
+
+  <!-- Templates card -->
+  <div class="card" id="templates-card">
+    <div class="card-title">Templates</div>
+    <div id="template-save-row">
+      <input type="text" id="template-name-input" placeholder="Template name…" />
+      <button class="btn btn-secondary" id="btn-save-template">Save Current Config</button>
+    </div>
+    <hr id="template-divider" />
+    <div id="template-list">
+      <div id="template-empty">No templates saved yet</div>
+    </div>
   </div>
 
   <!-- Log output card -->
@@ -273,7 +917,74 @@
     </div>
   </div>
 
-</main>
+</div><!-- #view-cleaner -->
+
+<!-- ══════════════ TEMPLATES VIEW ══════════════ -->
+<div id="view-templates">
+
+  <!-- Sidebar -->
+  <div id="tmpl-sidebar">
+    <div id="tmpl-sidebar-header">Templates</div>
+    <div id="tmpl-sidebar-list"></div>
+    <div id="tmpl-sidebar-footer">
+      <button id="btn-new-template">+ New Template</button>
+    </div>
+  </div>
+
+  <!-- Editor -->
+  <div id="tmpl-editor">
+    <div id="tmpl-placeholder">Select a template or create a new one.</div>
+
+    <div id="tmpl-form">
+      <!-- Name row -->
+      <div id="tmpl-name-row">
+        <input type="text" id="tmpl-name-input" placeholder="Template name…" autocomplete="off" />
+        <div id="tmpl-dirty-dot" title="Unsaved changes"></div>
+        <button class="btn btn-secondary" id="btn-tmpl-save">Save</button>
+      </div>
+
+      <!-- Settings -->
+      <div class="card" id="tmpl-settings-card">
+        <div class="card-title">Settings</div>
+        <div class="settings-row">
+          <label class="toggle-row">
+            <input type="checkbox" id="tmpl-recursive" />
+            Recursive (scan sub-folders)
+          </label>
+          <div class="settings-field">
+            <span>Unmatched files →</span>
+            <span class="info-icon" data-tip="Files that don't match any rule are normally left untouched. Set a folder name here (e.g. &quot;Other&quot;) and they will be moved there instead, leaving the target folder fully clean.">i</span>
+            <input type="text" id="tmpl-unmatched" placeholder="(none)" autocomplete="off" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Rules -->
+      <div>
+        <div id="tmpl-rules-header">
+          <div class="card-title" style="margin-bottom:0">Rules</div>
+          <button class="btn btn-outline btn-sm" id="btn-add-rule">+ Add Rule</button>
+        </div>
+      </div>
+      <div id="tmpl-rules-list"></div>
+
+      <!-- Status -->
+      <div id="tmpl-status"></div>
+    </div>
+  </div>
+
+</div><!-- #view-templates -->
+
+<!-- View rules modal (used from cleaner page) -->
+<div id="modal-backdrop">
+  <div id="modal">
+    <div id="modal-header">
+      <span id="modal-title">Template Rules</span>
+      <button id="modal-close" title="Close">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
   const { invoke } = window.__TAURI__.core;
@@ -281,22 +992,42 @@
 
   let currentFolder = null;
 
-  // ── DOM refs ──────────────────────────────────────────────────────────────
-  const folderPathEl   = document.getElementById("folder-path");
-  const statusBanner   = document.getElementById("status-banner");
-  const statusText     = document.getElementById("status-text");
-  const statusIcon     = document.getElementById("status-icon");
-  const actionsEl      = document.getElementById("actions");
-  const btnGenerate    = document.getElementById("btn-generate");
-  const btnDry         = document.getElementById("btn-dry");
-  const btnRun         = document.getElementById("btn-run");
-  const logCard        = document.getElementById("log-card");
-  const logOutput      = document.getElementById("log-output");
-  const summaryCard    = document.getElementById("summary-card");
-  const statMoved      = document.getElementById("stat-moved");
-  const statErrors     = document.getElementById("stat-errors");
+  // ────────────────────────────────────────────────────────────────────────────
+  // TAB NAVIGATION
+  // ────────────────────────────────────────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const view = btn.dataset.view;
+      document.getElementById("view-cleaner").classList.toggle("active", view === "cleaner");
+      document.getElementById("view-templates").classList.toggle("active", view === "templates");
+      if (view === "templates") loadTmplList();
+    });
+  });
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────────
+  // CLEANER VIEW
+  // ────────────────────────────────────────────────────────────────────────────
+  const folderPathEl    = document.getElementById("folder-path");
+  const statusBanner    = document.getElementById("status-banner");
+  const statusText      = document.getElementById("status-text");
+  const statusIcon      = document.getElementById("status-icon");
+  const actionsEl       = document.getElementById("actions");
+  const btnGenerate     = document.getElementById("btn-generate");
+  const btnDry          = document.getElementById("btn-dry");
+  const btnRun          = document.getElementById("btn-run");
+  const logCard         = document.getElementById("log-card");
+  const logOutput       = document.getElementById("log-output");
+  const summaryCard     = document.getElementById("summary-card");
+  const statMoved       = document.getElementById("stat-moved");
+  const statErrors      = document.getElementById("stat-errors");
+  const templatesCard   = document.getElementById("templates-card");
+  const templateList    = document.getElementById("template-list");
+  const templateEmpty   = document.getElementById("template-empty");
+  const templateInput   = document.getElementById("template-name-input");
+  const btnSaveTemplate = document.getElementById("btn-save-template");
+
   function showStatus(type, icon, text) {
     statusBanner.className = `visible ${type}`;
     statusIcon.textContent = icon;
@@ -330,7 +1061,11 @@
     [btnDry, btnRun, btnGenerate].forEach(b => b.disabled = loading);
   }
 
-  // ── Pick folder ───────────────────────────────────────────────────────────
+  function updateSaveButton(hasConfig) {
+    btnSaveTemplate.disabled = !hasConfig;
+  }
+
+  // ── Folder pick ────────────────────────────────────────────────────────────
   document.getElementById("btn-pick").addEventListener("click", async () => {
     const path = await open({ directory: true, multiple: false });
     if (!path) return;
@@ -340,10 +1075,12 @@
     folderPathEl.classList.add("has-value");
     clearLog();
 
-    // Check for config
     const hasConfig = await invoke("check_config", { folderPath: path });
 
     actionsEl.classList.add("visible");
+    templatesCard.classList.add("visible");
+    updateSaveButton(hasConfig);
+    await loadCleanerTemplates();
 
     if (hasConfig) {
       showStatus("success", "✓", "cleaner.toml found — ready to clean.");
@@ -351,24 +1088,24 @@
       btnDry.style.display = "";
       btnRun.style.display = "";
     } else {
-      showStatus("warning", "⚠", "No cleaner.toml found in this folder. Generate a default one to get started.");
+      showStatus("warning", "⚠", "No cleaner.toml found. Generate a default one to get started.");
       btnGenerate.style.display = "";
       btnDry.style.display = "none";
       btnRun.style.display = "none";
     }
   });
 
-  // ── Generate config ───────────────────────────────────────────────────────
+  // ── Generate config ────────────────────────────────────────────────────────
   btnGenerate.addEventListener("click", async () => {
     if (!currentFolder) return;
     setButtonsLoading(true);
-
     try {
       await invoke("generate_default_config", { folderPath: currentFolder });
       showStatus("success", "✓", "cleaner.toml created with default rules.");
       btnGenerate.style.display = "none";
       btnDry.style.display = "";
       btnRun.style.display = "";
+      updateSaveButton(true);
     } catch (e) {
       showStatus("error", "✗", `Failed to generate config: ${e}`);
     } finally {
@@ -376,27 +1113,19 @@
     }
   });
 
-  // ── Run cleaner ───────────────────────────────────────────────────────────
+  // ── Run cleaner ────────────────────────────────────────────────────────────
   async function runCleaner(dryRun) {
     if (!currentFolder) return;
-
     setButtonsLoading(true);
     clearLog();
     logCard.classList.add("visible");
     appendLog(dryRun ? "Starting dry run…" : "Starting run…");
-
     try {
       const result = await invoke("run_cleaner", { folderPath: currentFolder, dryRun });
-
-      for (const msg of result.messages) {
-        appendLog(msg);
-      }
-
-      // Summary
+      for (const msg of result.messages) appendLog(msg);
       summaryCard.style.display = "";
       statMoved.textContent  = result.moved;
       statErrors.textContent = result.errors;
-
       if (dryRun) {
         showStatus("info", "ℹ", `Dry run complete — ${result.moved} file(s) would be moved.`);
       } else if (result.errors > 0) {
@@ -414,6 +1143,614 @@
 
   btnDry.addEventListener("click", () => runCleaner(true));
   btnRun.addEventListener("click", () => runCleaner(false));
+
+  // ── Templates card (cleaner view) ──────────────────────────────────────────
+  async function loadCleanerTemplates() {
+    const names = await invoke("list_templates");
+    Array.from(templateList.children).forEach(el => {
+      if (el !== templateEmpty) el.remove();
+    });
+    if (names.length === 0) {
+      templateEmpty.style.display = "";
+      return;
+    }
+    templateEmpty.style.display = "none";
+    for (const name of names) {
+      const item = document.createElement("div");
+      item.className = "template-item";
+      item.innerHTML = `
+        <span class="template-item-name">› ${escHtml(name)}</span>
+        <button class="btn btn-outline btn-sm" data-action="view"   data-name="${escAttr(name)}">View</button>
+        <button class="btn btn-yellow  btn-sm" data-action="apply"  data-name="${escAttr(name)}">Apply</button>
+        <button class="btn btn-danger  btn-sm" data-action="delete" data-name="${escAttr(name)}">Delete</button>
+      `;
+      templateList.appendChild(item);
+    }
+  }
+
+  templateList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const name   = btn.dataset.name;
+
+    if (action === "view") {
+      showTemplateRules(name);
+      return;
+    }
+    if (!currentFolder) return;
+
+    if (action === "delete") {
+      try {
+        await invoke("delete_template", { templateName: name });
+        await loadCleanerTemplates();
+      } catch (err) {
+        showStatus("error", "✗", `Failed to delete template: ${err}`);
+      }
+    } else if (action === "apply") {
+      try {
+        await invoke("apply_template", { templateName: name, folderPath: currentFolder });
+        showStatus("success", "✓", `Template "${name}" applied — cleaner.toml updated.`);
+        btnGenerate.style.display = "none";
+        btnDry.style.display = "";
+        btnRun.style.display = "";
+        actionsEl.classList.add("visible");
+        updateSaveButton(true);
+        await loadCleanerTemplates();
+      } catch (err) {
+        showStatus("error", "✗", `Failed to apply template: ${err}`);
+      }
+    }
+  });
+
+  btnSaveTemplate.addEventListener("click", async () => {
+    if (!currentFolder) return;
+    const name = templateInput.value.trim();
+    if (!name) { templateInput.focus(); return; }
+    try {
+      await invoke("save_as_template", { folderPath: currentFolder, templateName: name });
+      templateInput.value = "";
+      await loadCleanerTemplates();
+    } catch (err) {
+      showStatus("error", "✗", `Failed to save template: ${err}`);
+    }
+  });
+
+  // ── View rules modal ────────────────────────────────────────────────────────
+  const modalBackdrop = document.getElementById("modal-backdrop");
+  const modalTitle    = document.getElementById("modal-title");
+  const modalBody     = document.getElementById("modal-body");
+  const modalClose    = document.getElementById("modal-close");
+
+  function closeModal() {
+    modalBackdrop.classList.remove("visible");
+    modalBody.innerHTML = "";
+  }
+
+  modalClose.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => { if (e.target === modalBackdrop) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  async function showTemplateRules(name) {
+    modalTitle.textContent = `Rules — ${name}`;
+    modalBody.innerHTML = `<div style="color:var(--text-dim);font-size:.85rem">Loading…</div>`;
+    modalBackdrop.classList.add("visible");
+    let info;
+    try {
+      info = await invoke("get_template_rules", { templateName: name });
+    } catch (err) {
+      modalBody.innerHTML = `<div style="color:var(--red)">Failed to load: ${err}</div>`;
+      return;
+    }
+    const parts = [];
+    const settingsTags = [
+      `<span class="modal-tag ${info.recursive ? 'on' : ''}">recursive: ${info.recursive}</span>`,
+      ...(info.unmatched_destination ? [`<span class="modal-tag on">unmatched → ${escHtml(info.unmatched_destination)}</span>`] : [])
+    ];
+    parts.push(`<div><div class="modal-section-title">Settings</div><div class="modal-settings">${settingsTags.join("")}</div></div>`);
+    const rulesHtml = info.rules.map(r => {
+      const exts = r.extensions.map(e => `<span class="ext-chip">.${escHtml(e)}</span>`).join("");
+      const meta = [];
+      if (r.name_pattern) meta.push(`pattern: <code>${escHtml(r.name_pattern)}</code>`);
+      if (r.min_size_mb != null) meta.push(`min ${r.min_size_mb} MB`);
+      if (r.max_size_mb != null) meta.push(`max ${r.max_size_mb} MB`);
+      return `<div class="rule-row">
+        <div class="rule-row-header"><span class="rule-name">${escHtml(r.name)}</span><span class="rule-dest">→ ${escHtml(r.destination)}/</span></div>
+        ${exts ? `<div class="rule-ext-list">${exts}</div>` : ""}
+        ${meta.length ? `<div class="rule-meta">${meta.join(" · ")}</div>` : ""}
+      </div>`;
+    }).join("");
+    parts.push(`<div><div class="modal-section-title">${info.rules.length} Rule${info.rules.length !== 1 ? "s" : ""}</div><div style="display:flex;flex-direction:column;gap:6px">${rulesHtml}</div></div>`);
+    modalBody.innerHTML = parts.join("");
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // TEMPLATES MANAGEMENT VIEW
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let tmplOriginalName = null;   // null = new unsaved template
+  let tmplRules        = [];     // [{name, destination, extensions, namePattern, minSizeMb, maxSizeMb}]
+  let tmplDirty        = false;
+
+  const tmplSidebarList = document.getElementById("tmpl-sidebar-list");
+  const tmplPlaceholder = document.getElementById("tmpl-placeholder");
+  const tmplForm        = document.getElementById("tmpl-form");
+  const tmplNameInput   = document.getElementById("tmpl-name-input");
+  const tmplDirtyDot    = document.getElementById("tmpl-dirty-dot");
+  const tmplRecursive   = document.getElementById("tmpl-recursive");
+  const tmplUnmatched   = document.getElementById("tmpl-unmatched");
+  const tmplRulesList   = document.getElementById("tmpl-rules-list");
+  const tmplStatusEl    = document.getElementById("tmpl-status");
+  const btnTmplSave     = document.getElementById("btn-tmpl-save");
+  const btnAddRule      = document.getElementById("btn-add-rule");
+  const btnNewTemplate  = document.getElementById("btn-new-template");
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function escAttr(s) { return escHtml(s); }
+
+  function setTmplDirty(v) {
+    tmplDirty = v;
+    tmplDirtyDot.classList.toggle("visible", v);
+  }
+
+  function setTmplStatus(msg, type) {
+    tmplStatusEl.textContent = msg;
+    tmplStatusEl.className = ""; // reset
+    if (type) tmplStatusEl.classList.add(type);
+  }
+
+  // ── Sidebar ────────────────────────────────────────────────────────────────
+  async function loadTmplList(selectName) {
+    const names = await invoke("list_templates");
+    tmplSidebarList.innerHTML = "";
+
+    if (names.length === 0) {
+      tmplSidebarList.innerHTML = `<div style="padding:12px 14px;font-size:.82rem;color:var(--text-dim)">No templates yet</div>`;
+    }
+
+    for (const name of names) {
+      const item = document.createElement("div");
+      item.className = "tmpl-sidebar-item";
+      item.dataset.name = name;
+      item.innerHTML = `
+        <span class="tmpl-sidebar-item-name">${escHtml(name)}</span>
+        <button class="tmpl-sidebar-action tmpl-sidebar-dupe"   title="Duplicate">⧉</button>
+        <button class="tmpl-sidebar-action tmpl-sidebar-delete" title="Delete">×</button>
+      `;
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".tmpl-sidebar-action")) return;
+        selectTemplate(name);
+      });
+      item.querySelector(".tmpl-sidebar-dupe").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await duplicateTmpl(name);
+      });
+      item.querySelector(".tmpl-sidebar-delete").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await deleteTmpl(name);
+      });
+      tmplSidebarList.appendChild(item);
+    }
+
+    if (selectName) {
+      const activeItem = tmplSidebarList.querySelector(`[data-name="${CSS.escape(selectName)}"]`);
+      if (activeItem) activeItem.classList.add("active");
+    }
+  }
+
+  function highlightSidebarItem(name) {
+    tmplSidebarList.querySelectorAll(".tmpl-sidebar-item").forEach(el => {
+      el.classList.toggle("active", el.dataset.name === name);
+    });
+  }
+
+  // ── Select / load template ─────────────────────────────────────────────────
+  async function selectTemplate(name) {
+    highlightSidebarItem(name);
+    tmplPlaceholder.style.display = "none";
+    tmplForm.classList.add("visible");
+    setTmplStatus("");
+
+    let info;
+    try {
+      info = await invoke("get_template_rules", { templateName: name });
+    } catch (err) {
+      setTmplStatus(`Failed to load template: ${err}`, "err");
+      return;
+    }
+
+    tmplOriginalName      = name;
+    tmplNameInput.value   = name;
+    tmplRecursive.checked = info.recursive;
+    tmplUnmatched.value   = info.unmatched_destination ?? "";
+    tmplRules = info.rules.map(r => ({
+      name:        r.name,
+      destination: r.destination,
+      extensions:  [...r.extensions],
+      namePattern: r.name_pattern ?? "",
+      minSizeMb:   r.min_size_mb != null ? String(r.min_size_mb) : "",
+      maxSizeMb:   r.max_size_mb != null ? String(r.max_size_mb) : "",
+      ignore:      [...(r.ignore ?? [])],
+    }));
+
+    renderRules();
+    setTmplDirty(false);
+  }
+
+  // ── New template ───────────────────────────────────────────────────────────
+  btnNewTemplate.addEventListener("click", () => {
+    highlightSidebarItem(null);
+    tmplPlaceholder.style.display = "none";
+    tmplForm.classList.add("visible");
+    tmplOriginalName      = null;
+    tmplNameInput.value   = "";
+    tmplRecursive.checked = false;
+    tmplUnmatched.value   = "";
+    tmplRules             = [];
+    renderRules();
+    setTmplDirty(false);
+    setTmplStatus("");
+    tmplNameInput.focus();
+  });
+
+  // ── Dirty tracking ─────────────────────────────────────────────────────────
+  [tmplNameInput, tmplUnmatched].forEach(el =>
+    el.addEventListener("input", () => setTmplDirty(true))
+  );
+  tmplRecursive.addEventListener("change", () => setTmplDirty(true));
+
+  // ── Rules rendering ────────────────────────────────────────────────────────
+  function renderRules() {
+    tmplRulesList.innerHTML = "";
+    tmplRules.forEach((rule, idx) => {
+      tmplRulesList.appendChild(buildRuleCard(rule, idx));
+    });
+  }
+
+  function buildRuleCard(rule, idx) {
+    const card = document.createElement("div");
+    card.className = "rule-editor-card";
+
+    card.innerHTML = `
+      <div class="rule-card-header">
+        <div class="rule-order-btns">
+          <button class="rule-order-btn" data-dir="up"   title="Move up"   ${idx === 0                    ? "disabled" : ""}></button>
+          <button class="rule-order-btn" data-dir="down" title="Move down" ${idx === tmplRules.length - 1 ? "disabled" : ""}></button>
+        </div>
+        <input type="text" class="rule-name-inp" placeholder="Rule name…" value="${escAttr(rule.name)}" />
+        <span class="rule-arrow">→</span>
+        <input type="text" class="rule-dest-inp" placeholder="Destination folder…" value="${escAttr(rule.destination)}" style="flex:1.2" />
+        <button class="rule-delete-btn" title="Remove rule">×</button>
+      </div>
+      <div class="rule-card-body">
+        <div class="rule-field-row">
+          <span class="rule-field-label">Extensions</span>
+          <div class="ext-input-wrap" data-idx="${idx}"></div>
+        </div>
+        <div class="rule-field-row">
+          <span class="rule-field-label">Exclude</span>
+          <div class="ext-input-wrap ignore-input-wrap" data-idx="${idx}"></div>
+        </div>
+        <details class="rule-optional">
+          <summary>Optional filters</summary>
+          <div class="rule-optional-body">
+            <div class="rule-opt-row">
+              <span class="rule-opt-label">Name pattern</span>
+              <input type="text" class="rule-opt-input rule-pattern-inp" placeholder="e.g. *.log" value="${escAttr(rule.namePattern)}" />
+            </div>
+            <div class="rule-opt-row">
+              <span class="rule-opt-label">Min size (MB)</span>
+              <input type="number" class="rule-opt-input rule-min-inp" placeholder="—" min="0" step="0.1" value="${escAttr(rule.minSizeMb)}" />
+            </div>
+            <div class="rule-opt-row">
+              <span class="rule-opt-label">Max size (MB)</span>
+              <input type="number" class="rule-opt-input rule-max-inp" placeholder="—" min="0" step="0.1" value="${escAttr(rule.maxSizeMb)}" />
+            </div>
+          </div>
+        </details>
+      </div>
+    `;
+
+    // Extension chip input
+    const extWrap = card.querySelector(".ext-input-wrap");
+    buildExtChips(extWrap, rule.extensions, idx);
+
+    // Ignore chip input
+    const ignoreWrap = card.querySelector(".ignore-input-wrap");
+    buildIgnoreChips(ignoreWrap, rule.ignore, idx);
+
+    // Field bindings
+    card.querySelector(".rule-name-inp").addEventListener("input", e => {
+      tmplRules[idx].name = e.target.value;
+      setTmplDirty(true);
+    });
+    card.querySelector(".rule-dest-inp").addEventListener("input", e => {
+      tmplRules[idx].destination = e.target.value;
+      setTmplDirty(true);
+    });
+    card.querySelector(".rule-pattern-inp").addEventListener("input", e => {
+      tmplRules[idx].namePattern = e.target.value;
+      setTmplDirty(true);
+    });
+    card.querySelector(".rule-min-inp").addEventListener("input", e => {
+      tmplRules[idx].minSizeMb = e.target.value;
+      setTmplDirty(true);
+    });
+    card.querySelector(".rule-max-inp").addEventListener("input", e => {
+      tmplRules[idx].maxSizeMb = e.target.value;
+      setTmplDirty(true);
+    });
+
+    // Delete rule
+    card.querySelector(".rule-delete-btn").addEventListener("click", () => {
+      tmplRules.splice(idx, 1);
+      renderRules();
+      setTmplDirty(true);
+    });
+
+    // Up / down reorder
+    card.querySelectorAll(".rule-order-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const dir = btn.dataset.dir;
+        const swap = dir === "up" ? idx - 1 : idx + 1;
+        if (swap < 0 || swap >= tmplRules.length) return;
+        [tmplRules[idx], tmplRules[swap]] = [tmplRules[swap], tmplRules[idx]];
+        renderRules();
+        setTmplDirty(true);
+      });
+    });
+
+    return card;
+  }
+
+  // ── Extension chip input ───────────────────────────────────────────────────
+  function buildExtChips(wrap, extensions, idx) {
+    wrap.innerHTML = "";
+    for (const ext of extensions) {
+      wrap.appendChild(makeChip(ext, idx));
+    }
+    const textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.className = "ext-text-input";
+    textInput.placeholder = extensions.length ? "" : "jpg, png, pdf…";
+
+    textInput.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === "," || e.key === " ") && textInput.value.trim()) {
+        e.preventDefault();
+        addExt(textInput.value, idx, wrap, textInput);
+      } else if (e.key === "Backspace" && !textInput.value && tmplRules[idx].extensions.length) {
+        tmplRules[idx].extensions.pop();
+        renderRules();
+        // Refocus last ext chip's input
+        const newWrap = tmplRulesList.querySelectorAll(".ext-input-wrap")[idx];
+        if (newWrap) newWrap.querySelector(".ext-text-input")?.focus();
+        setTmplDirty(true);
+      }
+    });
+
+    textInput.addEventListener("blur", () => {
+      if (textInput.value.trim()) addExt(textInput.value, idx, wrap, textInput);
+    });
+
+    wrap.appendChild(textInput);
+    wrap.addEventListener("click", () => textInput.focus());
+  }
+
+  function addExt(raw, idx, wrap, textInput) {
+    const ext = raw.trim().replace(/^\./, "").toLowerCase();
+    if (ext && !tmplRules[idx].extensions.includes(ext)) {
+      tmplRules[idx].extensions.push(ext);
+      const chip = makeChip(ext, idx);
+      wrap.insertBefore(chip, textInput);
+      setTmplDirty(true);
+    }
+    textInput.value = "";
+  }
+
+  function makeChip(ext, idx) {
+    const chip = document.createElement("span");
+    chip.className = "ext-chip-editor";
+    chip.innerHTML = `.${escHtml(ext)}<button class="ext-chip-remove" title="Remove">×</button>`;
+    chip.querySelector(".ext-chip-remove").addEventListener("click", () => {
+      tmplRules[idx].extensions = tmplRules[idx].extensions.filter(e => e !== ext);
+      renderRules();
+      // Re-focus the text input of the same card
+      const newWrap = tmplRulesList.querySelectorAll(".ext-input-wrap")[idx];
+      if (newWrap) newWrap.querySelector(".ext-text-input")?.focus();
+      setTmplDirty(true);
+    });
+    return chip;
+  }
+
+  // ── Ignore chip input ──────────────────────────────────────────────────────
+  function buildIgnoreChips(wrap, ignoreList, idx) {
+    wrap.innerHTML = "";
+    for (const pattern of ignoreList) {
+      wrap.appendChild(makeIgnoreChip(pattern, idx));
+    }
+    const textInput = document.createElement("input");
+    textInput.type = "text";
+    textInput.className = "ext-text-input";
+    textInput.placeholder = ignoreList.length ? "" : "*.tmp, secret.txt…";
+
+    textInput.addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === ",") && textInput.value.trim()) {
+        e.preventDefault();
+        addIgnorePattern(textInput.value, idx, wrap, textInput);
+      } else if (e.key === "Backspace" && !textInput.value && tmplRules[idx].ignore.length) {
+        tmplRules[idx].ignore.pop();
+        renderRules();
+        const newWrap = tmplRulesList.querySelectorAll(".ignore-input-wrap")[idx];
+        if (newWrap) newWrap.querySelector(".ext-text-input")?.focus();
+        setTmplDirty(true);
+      }
+    });
+
+    textInput.addEventListener("blur", () => {
+      if (textInput.value.trim()) addIgnorePattern(textInput.value, idx, wrap, textInput);
+    });
+
+    wrap.appendChild(textInput);
+    wrap.addEventListener("click", () => textInput.focus());
+  }
+
+  function addIgnorePattern(raw, idx, wrap, textInput) {
+    const pattern = raw.trim();
+    if (pattern && !tmplRules[idx].ignore.includes(pattern)) {
+      tmplRules[idx].ignore.push(pattern);
+      wrap.insertBefore(makeIgnoreChip(pattern, idx), textInput);
+      setTmplDirty(true);
+    }
+    textInput.value = "";
+  }
+
+  function makeIgnoreChip(pattern, idx) {
+    const chip = document.createElement("span");
+    chip.className = "ext-chip-editor ignore-chip";
+    chip.innerHTML = `${escHtml(pattern)}<button class="ext-chip-remove" title="Remove">×</button>`;
+    chip.querySelector(".ext-chip-remove").addEventListener("click", () => {
+      tmplRules[idx].ignore = tmplRules[idx].ignore.filter(p => p !== pattern);
+      renderRules();
+      const newWrap = tmplRulesList.querySelectorAll(".ignore-input-wrap")[idx];
+      if (newWrap) newWrap.querySelector(".ext-text-input")?.focus();
+      setTmplDirty(true);
+    });
+    return chip;
+  }
+
+  // ── Add rule ───────────────────────────────────────────────────────────────
+  btnAddRule.addEventListener("click", () => {
+    tmplRules.push({ name: "", destination: "", extensions: [], namePattern: "", minSizeMb: "", maxSizeMb: "", ignore: [] });
+    renderRules();
+    setTmplDirty(true);
+    // Focus new rule's name input
+    const cards = tmplRulesList.querySelectorAll(".rule-name-inp");
+    cards[cards.length - 1]?.focus();
+  });
+
+  // ── Delete template ────────────────────────────────────────────────────────
+  async function deleteTmpl(name) {
+    try {
+      await invoke("delete_template", { templateName: name });
+      if (tmplOriginalName === name) {
+        tmplOriginalName = null;
+        tmplForm.classList.remove("visible");
+        tmplPlaceholder.style.display = "";
+      }
+      await loadTmplList();
+    } catch (err) {
+      setTmplStatus(`Delete failed: ${err}`, "err");
+    }
+  }
+
+  // ── TOML builder ───────────────────────────────────────────────────────────
+  function q(s) { return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
+
+  function buildTomlFromData(recursive, unmatched, rules) {
+    let out = "[settings]\n";
+    out += `recursive = ${recursive}\n`;
+    if (unmatched.trim()) out += `unmatched_destination = "${q(unmatched.trim())}"\n`;
+    out += "\n";
+    for (const r of rules) {
+      out += "[[rules]]\n";
+      out += `name = "${q(r.name)}"\n`;
+      out += `destination = "${q(r.destination)}"\n`;
+      if (r.extensions.length) out += `extensions = [${r.extensions.map(e => `"${q(e)}"`).join(", ")}]\n`;
+      if (r.namePattern?.trim()) out += `name_pattern = "${q(r.namePattern.trim())}"\n`;
+      if (r.minSizeMb !== "") out += `min_size_mb = ${parseFloat(r.minSizeMb)}\n`;
+      if (r.maxSizeMb !== "") out += `max_size_mb = ${parseFloat(r.maxSizeMb)}\n`;
+      if (r.ignore?.length) out += `ignore = [${r.ignore.map(p => `"${q(p)}"`).join(", ")}]\n`;
+      out += "\n";
+    }
+    return out.trimEnd();
+  }
+
+  function buildToml() {
+    return buildTomlFromData(tmplRecursive.checked, tmplUnmatched.value, tmplRules);
+  }
+
+  async function duplicateTmpl(name) {
+    let info;
+    try {
+      info = await invoke("get_template_rules", { templateName: name });
+    } catch (err) {
+      setTmplStatus(`Failed to duplicate: ${err}`, "err");
+      return;
+    }
+
+    const existing = await invoke("list_templates");
+    let newName = `${name} copy`;
+    let counter = 2;
+    while (existing.includes(newName)) newName = `${name} copy ${counter++}`;
+
+    const rules = info.rules.map(r => ({
+      name:        r.name,
+      destination: r.destination,
+      extensions:  [...r.extensions],
+      namePattern: r.name_pattern ?? "",
+      minSizeMb:   r.min_size_mb != null ? String(r.min_size_mb) : "",
+      maxSizeMb:   r.max_size_mb != null ? String(r.max_size_mb) : "",
+      ignore:      [...(r.ignore ?? [])],
+    }));
+
+    const toml = buildTomlFromData(info.recursive, info.unmatched_destination ?? "", rules);
+    try {
+      await invoke("save_template_content", { templateName: newName, content: toml });
+      await loadTmplList(newName);
+      await selectTemplate(newName);
+    } catch (err) {
+      setTmplStatus(`Failed to duplicate: ${err}`, "err");
+    }
+  }
+
+  // ── Save ───────────────────────────────────────────────────────────────────
+  btnTmplSave.addEventListener("click", async () => {
+    const name = tmplNameInput.value.trim();
+    if (!name) {
+      setTmplStatus("Template name is required.", "err");
+      tmplNameInput.focus();
+      return;
+    }
+
+    // Validate rules
+    for (let i = 0; i < tmplRules.length; i++) {
+      const r = tmplRules[i];
+      if (!r.name.trim()) { setTmplStatus(`Rule ${i + 1}: name is required.`, "err"); return; }
+      if (!r.destination.trim()) { setTmplStatus(`Rule "${r.name}": destination is required.`, "err"); return; }
+      const hasCondition = r.extensions.length || r.namePattern.trim() || r.minSizeMb !== "" || r.maxSizeMb !== "";
+      if (!hasCondition) { setTmplStatus(`Rule "${r.name}": at least one condition is required (extension, pattern or size).`, "err"); return; }
+    }
+
+    if (tmplRules.length === 0) {
+      setTmplStatus("Add at least one rule before saving.", "err");
+      return;
+    }
+
+    const toml = buildToml();
+    btnTmplSave.disabled = true;
+
+    try {
+      await invoke("save_template_content", { templateName: name, content: toml });
+
+      // If renamed, delete old file
+      if (tmplOriginalName !== null && tmplOriginalName !== name) {
+        await invoke("delete_template", { templateName: tmplOriginalName });
+      }
+
+      tmplOriginalName = name;
+      setTmplDirty(false);
+      setTmplStatus("Saved successfully.", "ok");
+      await loadTmplList(name);
+    } catch (err) {
+      setTmplStatus(`Save failed: ${err}`, "err");
+    } finally {
+      btnTmplSave.disabled = false;
+    }
+  });
 </script>
 
 </body>
