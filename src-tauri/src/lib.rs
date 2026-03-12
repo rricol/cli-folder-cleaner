@@ -24,6 +24,10 @@ pub fn run() {
             commands::save_template_content,
             commands::rename_template,
             commands::get_folder_config_info,
+            commands::get_folder_association,
+            commands::set_folder_association,
+            commands::remove_folder_association,
+            commands::run_with_template,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

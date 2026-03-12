@@ -1333,6 +1333,31 @@
                 color: var(--cyan);
             }
 
+            #cfg-unlinked {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .config-linked-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+            }
+            .config-link-label {
+                font-size: 0.85rem;
+                color: var(--text-dim);
+                flex-shrink: 0;
+            }
+            .config-link-name {
+                font-size: 0.88rem;
+                font-weight: 600;
+                color: var(--accent2);
+                flex: 1;
+            }
+
             /* ── Log card header with inline summary ── */
             #log-card-header {
                 display: flex;
@@ -1516,38 +1541,36 @@
             <!-- Config source card -->
             <div class="card" id="config-card">
                 <div class="card-title">Configuration</div>
-                <div class="config-select-wrap">
-                    <button id="config-select-btn" class="config-select-btn">
-                        <span class="config-btn-label" id="config-btn-label"
-                            >Local config (cleaner.toml)</span
-                        >
-                        <span class="config-badge" id="config-btn-badge"></span>
-                        <span class="config-dropdown-arrow">▾</span>
-                    </button>
-                    <div
-                        id="config-dropdown-menu"
-                        class="config-dropdown-menu"
-                        style="display: none"
-                    >
-                        <div
-                            class="config-opt"
-                            id="cfg-opt-local"
-                            data-value="local"
-                        >
-                            <span>Local config (cleaner.toml)</span>
-                            <span
-                                class="config-badge"
-                                id="cfg-local-badge"
-                            ></span>
-                        </div>
-                        <div class="config-opt-separator">Templates</div>
-                        <div id="cfg-template-opts"></div>
-                        <div id="cfg-no-templates" class="config-opt-empty">
-                            No templates saved
+
+                <!-- Unlinked state: pick a template to link -->
+                <div id="cfg-unlinked">
+                    <div class="config-select-wrap">
+                        <button id="config-select-btn" class="config-select-btn">
+                            <span class="config-btn-label" id="config-btn-label">Select a template…</span>
+                            <span class="config-dropdown-arrow">▾</span>
+                        </button>
+                        <div id="config-dropdown-menu" class="config-dropdown-menu" style="display:none">
+                            <div id="cfg-template-opts"></div>
+                            <div id="cfg-no-templates" class="config-opt-empty">No templates — create one in the Templates tab.</div>
                         </div>
                     </div>
+                    <button class="btn btn-primary" id="btn-link-tmpl" disabled>Link template</button>
                 </div>
-                <div class="config-actions-row" id="config-actions"></div>
+
+                <!-- Linked state: show linked template + actions -->
+                <div id="cfg-linked" style="display:none">
+                    <div class="config-linked-row">
+                        <span class="config-link-label">Linked template:</span>
+                        <span class="config-link-name" id="cfg-linked-name"></span>
+                        <button class="btn btn-outline btn-sm" id="btn-change-tmpl">Change</button>
+                        <button class="btn btn-danger btn-sm" id="btn-unlink-tmpl">Unlink</button>
+                    </div>
+                    <div class="config-actions-row">
+                        <button class="btn btn-yellow" id="btn-dry-run">Dry Run</button>
+                        <button class="btn btn-green" id="btn-run-now">Run Now</button>
+                    </div>
+                </div>
+
                 <div class="config-status-line" id="config-status"></div>
             </div>
 
@@ -1719,8 +1742,8 @@
             const statMoved = document.getElementById("stat-moved");
             const statErrors = document.getElementById("stat-errors");
 
-            let selectedConfigSource = "local"; // "local" | template name
-            let hasLocalConfig = false;
+            let linkedTemplate = null;   // String | null — persisted association
+            let selectedTemplate = null; // String | null — dropdown selection (unlinked state)
 
             function setConfigStatus(msg, type) {
                 const el = document.getElementById("config-status");
@@ -1751,17 +1774,20 @@
                 return "log-default";
             }
 
-            // ── Config dropdown ────────────────────────────────────────────────────────
+            // ── Config card (folder-template binding) ────────────────────────────────
             const cfgSelectBtn = document.getElementById("config-select-btn");
-            const cfgDropdownMenu = document.getElementById(
-                "config-dropdown-menu",
-            );
+            const cfgDropdownMenu = document.getElementById("config-dropdown-menu");
             const cfgBtnLabel = document.getElementById("config-btn-label");
-            const cfgBtnBadge = document.getElementById("config-btn-badge");
-            const cfgLocalBadge = document.getElementById("cfg-local-badge");
-            const cfgTemplateOpts =
-                document.getElementById("cfg-template-opts");
+            const cfgTemplateOpts = document.getElementById("cfg-template-opts");
             const cfgNoTemplates = document.getElementById("cfg-no-templates");
+            const cfgUnlinked = document.getElementById("cfg-unlinked");
+            const cfgLinked = document.getElementById("cfg-linked");
+            const cfgLinkedName = document.getElementById("cfg-linked-name");
+            const btnLinkTmpl = document.getElementById("btn-link-tmpl");
+            const btnChangeTmpl = document.getElementById("btn-change-tmpl");
+            const btnUnlinkTmpl = document.getElementById("btn-unlink-tmpl");
+            const btnDryRun = document.getElementById("btn-dry-run");
+            const btnRunNow = document.getElementById("btn-run-now");
 
             cfgSelectBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -1775,24 +1801,14 @@
                 cfgSelectBtn.classList.remove("open");
             });
 
-            cfgDropdownMenu.addEventListener("click", (e) =>
-                e.stopPropagation(),
-            );
+            cfgDropdownMenu.addEventListener("click", (e) => e.stopPropagation());
 
-            document
-                .getElementById("cfg-opt-local")
-                .addEventListener("click", () => {
-                    selectedConfigSource = "local";
-                    updateConfigDropdownDisplay();
-                    renderConfigActions();
-                    cfgDropdownMenu.style.display = "none";
-                    cfgSelectBtn.classList.remove("open");
-                    setConfigStatus("");
-                });
-
-            async function loadConfigDropdown() {
+            async function loadTemplateDropdown() {
                 const names = await invoke("list_templates");
                 cfgTemplateOpts.innerHTML = "";
+                selectedTemplate = null;
+                cfgBtnLabel.textContent = "Select a template…";
+                btnLinkTmpl.disabled = true;
 
                 if (names.length === 0) {
                     cfgNoTemplates.style.display = "";
@@ -1804,150 +1820,79 @@
                         opt.dataset.value = name;
                         opt.textContent = name;
                         opt.addEventListener("click", () => {
-                            selectedConfigSource = name;
-                            updateConfigDropdownDisplay();
-                            renderConfigActions();
+                            selectedTemplate = name;
+                            cfgBtnLabel.textContent = name;
+                            cfgTemplateOpts.querySelectorAll(".config-opt").forEach((o) =>
+                                o.classList.toggle("selected", o.dataset.value === name)
+                            );
+                            btnLinkTmpl.disabled = false;
                             cfgDropdownMenu.style.display = "none";
                             cfgSelectBtn.classList.remove("open");
-                            setConfigStatus("");
                         });
                         cfgTemplateOpts.appendChild(opt);
                     }
                 }
-
-                if (
-                    selectedConfigSource !== "local" &&
-                    !names.includes(selectedConfigSource)
-                ) {
-                    selectedConfigSource = "local";
-                }
-                updateConfigDropdownDisplay();
-                renderConfigActions();
             }
 
-            function updateConfigDropdownDisplay() {
-                if (selectedConfigSource === "local") {
-                    cfgBtnLabel.textContent = "Local config (cleaner.toml)";
-                    cfgBtnBadge.textContent = hasLocalConfig
-                        ? "found"
-                        : "not found";
-                    cfgBtnBadge.className =
-                        "config-badge " +
-                        (hasLocalConfig ? "found" : "missing");
+            async function loadFolderAssociation() {
+                linkedTemplate = await invoke("get_folder_association", { folderPath: currentFolder });
+                renderConfigCard();
+            }
+
+            function renderConfigCard() {
+                if (linkedTemplate !== null) {
+                    cfgUnlinked.style.display = "none";
+                    cfgLinked.style.display = "";
+                    cfgLinkedName.textContent = linkedTemplate;
                 } else {
-                    cfgBtnLabel.textContent = selectedConfigSource;
-                    cfgBtnBadge.textContent = "template";
-                    cfgBtnBadge.className = "config-badge tmpl";
+                    cfgLinked.style.display = "none";
+                    cfgUnlinked.style.display = "";
                 }
-                cfgLocalBadge.textContent = hasLocalConfig
-                    ? "found"
-                    : "not found";
-                cfgLocalBadge.className =
-                    "config-badge " + (hasLocalConfig ? "found" : "missing");
-                document
-                    .getElementById("cfg-opt-local")
-                    .classList.toggle(
-                        "selected",
-                        selectedConfigSource === "local",
-                    );
-                cfgTemplateOpts
-                    .querySelectorAll(".config-opt")
-                    .forEach((opt) => {
-                        opt.classList.toggle(
-                            "selected",
-                            opt.dataset.value === selectedConfigSource,
-                        );
+                setConfigStatus("");
+            }
+
+            btnLinkTmpl.addEventListener("click", async () => {
+                if (!selectedTemplate || !currentFolder) return;
+                btnLinkTmpl.disabled = true;
+                try {
+                    await invoke("set_folder_association", {
+                        folderPath: currentFolder,
+                        templateName: selectedTemplate,
                     });
-            }
-
-            function renderConfigActions() {
-                const actionsEl = document.getElementById("config-actions");
-                actionsEl.innerHTML = "";
-
-                if (selectedConfigSource === "local") {
-                    if (hasLocalConfig) {
-                        actionsEl.append(
-                            makeBtn("Dry Run", "btn-yellow", () =>
-                                runCleaner(true),
-                            ),
-                            makeBtn("Run Now", "btn-green", () =>
-                                runCleaner(false),
-                            ),
-                            makeBtn("Manage", "btn-outline", () =>
-                                showFolderRules(),
-                            ),
-                        );
-                    } else {
-                        const btnCreate = makeBtn(
-                            "Create new config",
-                            "btn-primary",
-                            async () => {
-                                btnCreate.disabled = true;
-                                try {
-                                    await invoke("generate_default_config", {
-                                        folderPath: currentFolder,
-                                    });
-                                    hasLocalConfig = true;
-                                    updateConfigDropdownDisplay();
-                                    renderConfigActions();
-                                    setConfigStatus(
-                                        "cleaner.toml created with default rules.",
-                                        "ok",
-                                    );
-                                } catch (e) {
-                                    setConfigStatus(
-                                        `Failed to create config: ${e}`,
-                                        "err",
-                                    );
-                                } finally {
-                                    btnCreate.disabled = false;
-                                }
-                            },
-                        );
-                        actionsEl.append(btnCreate);
-                    }
-                } else {
-                    const tmplName = selectedConfigSource;
-                    const btnApply = makeBtn(
-                        "Apply as local config",
-                        "btn-secondary",
-                        async () => {
-                            btnApply.disabled = true;
-                            try {
-                                await invoke("apply_template", {
-                                    templateName: tmplName,
-                                    folderPath: currentFolder,
-                                });
-                                hasLocalConfig = true;
-                                selectedConfigSource = "local";
-                                updateConfigDropdownDisplay();
-                                renderConfigActions();
-                                setConfigStatus(
-                                    `Template "${tmplName}" applied as local config.`,
-                                    "ok",
-                                );
-                            } catch (e) {
-                                setConfigStatus(
-                                    `Failed to apply template: ${e}`,
-                                    "err",
-                                );
-                                btnApply.disabled = false;
-                            }
-                        },
-                    );
-                    actionsEl.append(btnApply);
-                    if (hasLocalConfig) {
-                        actionsEl.append(
-                            makeBtn("Dry Run", "btn-yellow", () =>
-                                runCleaner(true),
-                            ),
-                            makeBtn("Run Now", "btn-green", () =>
-                                runCleaner(false),
-                            ),
-                        );
-                    }
+                    linkedTemplate = selectedTemplate;
+                    renderConfigCard();
+                } catch (e) {
+                    setConfigStatus(`Failed to link template: ${e}`, "err");
+                    btnLinkTmpl.disabled = false;
                 }
-            }
+            });
+
+            btnUnlinkTmpl.addEventListener("click", async () => {
+                if (!currentFolder) return;
+                try {
+                    await invoke("remove_folder_association", { folderPath: currentFolder });
+                    linkedTemplate = null;
+                    renderConfigCard();
+                    await loadTemplateDropdown();
+                } catch (e) {
+                    setConfigStatus(`Failed to unlink: ${e}`, "err");
+                }
+            });
+
+            btnChangeTmpl.addEventListener("click", async () => {
+                if (!currentFolder) return;
+                try {
+                    await invoke("remove_folder_association", { folderPath: currentFolder });
+                    linkedTemplate = null;
+                    renderConfigCard();
+                    await loadTemplateDropdown();
+                } catch (e) {
+                    setConfigStatus(`Failed to change template: ${e}`, "err");
+                }
+            });
+
+            btnDryRun.addEventListener("click", () => runWithTemplate(true));
+            btnRunNow.addEventListener("click", () => runWithTemplate(false));
 
             function makeBtn(label, cls, onClick) {
                 const btn = document.createElement("button");
@@ -1975,12 +1920,9 @@
                 btnOpenFolder.classList.add("visible");
                 clearLog();
                 setConfigStatus("");
-                selectedConfigSource = "local";
-                hasLocalConfig = await invoke("check_config", {
-                    folderPath: path,
-                });
                 document.getElementById("config-card").style.display = "block";
-                await loadConfigDropdown();
+                await loadTemplateDropdown();
+                await loadFolderAssociation();
             }
 
             btnPick.addEventListener("click", pickFolder);
@@ -1995,39 +1937,28 @@
                 }
             });
 
-            // ── Run cleaner ────────────────────────────────────────────────────────────
-            async function runCleaner(dryRun) {
-                if (!currentFolder) return;
-                const actionsEl = document.getElementById("config-actions");
-                actionsEl
-                    .querySelectorAll("button")
-                    .forEach((b) => (b.disabled = true));
+            // ── Run with linked template ───────────────────────────────────────────────
+            async function runWithTemplate(dryRun) {
+                if (!currentFolder || !linkedTemplate) return;
+                [btnDryRun, btnRunNow].forEach((b) => (b.disabled = true));
                 clearLog();
                 logCard.classList.add("visible");
                 appendLog(dryRun ? "Starting dry run…" : "Starting run…");
                 try {
-                    const result = await invoke("run_cleaner", {
+                    const result = await invoke("run_with_template", {
                         folderPath: currentFolder,
+                        templateName: linkedTemplate,
                         dryRun,
                     });
                     for (const msg of result.messages) appendLog(msg);
                     statMoved.textContent = result.moved;
                     statErrors.textContent = result.errors;
                     const hasErr = result.errors > 0;
-                    logRunBadge.textContent = dryRun
-                        ? "Dry Run"
-                        : hasErr
-                          ? "Run"
-                          : "Run";
-                    logRunBadge.className =
-                        "run-badge " +
-                        (dryRun ? "dry" : hasErr ? "err" : "run");
+                    logRunBadge.textContent = dryRun ? "Dry Run" : "Run";
+                    logRunBadge.className = "run-badge " + (dryRun ? "dry" : hasErr ? "err" : "run");
                     logSummary.style.display = "flex";
                     if (hasErr && !dryRun) {
-                        setConfigStatus(
-                            `Done with errors — ${result.errors} error(s).`,
-                            "err",
-                        );
+                        setConfigStatus(`Done with errors — ${result.errors} error(s).`, "err");
                     } else {
                         setConfigStatus("", "");
                     }
@@ -2035,9 +1966,7 @@
                     appendLog(`ERROR: ${e}`);
                     setConfigStatus(`Run failed: ${e}`, "err");
                 } finally {
-                    actionsEl
-                        .querySelectorAll("button")
-                        .forEach((b) => (b.disabled = false));
+                    [btnDryRun, btnRunNow].forEach((b) => (b.disabled = false));
                 }
             }
 
@@ -2117,49 +2046,6 @@
                     return;
                 }
                 renderModalInfo(info);
-            }
-
-            async function showFolderRules() {
-                const folderName =
-                    currentFolder.split(/[\\/]/).filter(Boolean).pop() ||
-                    "config";
-                modalTitle.textContent = `Rules — ${folderName} (local config)`;
-                modalBody.innerHTML = `<div style="color:var(--text-dim);font-size:.85rem">Loading…</div>`;
-                modalFooter.innerHTML = "";
-                modalFooter.style.display = "flex";
-                modalBackdrop.classList.add("visible");
-                let info;
-                try {
-                    info = await invoke("get_folder_config_info", {
-                        folderPath: currentFolder,
-                    });
-                } catch (err) {
-                    modalBody.innerHTML = `<div style="color:var(--red)">Failed to load: ${err}</div>`;
-                    return;
-                }
-                renderModalInfo(info);
-                const btnEdit = document.createElement("button");
-                btnEdit.className = "btn btn-secondary btn-sm";
-                btnEdit.textContent = "Edit in Templates tab";
-                btnEdit.addEventListener("click", async () => {
-                    btnEdit.disabled = true;
-                    try {
-                        await invoke("save_as_template", {
-                            folderPath: currentFolder,
-                            templateName: folderName,
-                        });
-                        closeModal();
-                        document
-                            .querySelector('[data-view="templates"]')
-                            .click();
-                        await loadTmplList(folderName);
-                        await selectTemplate(folderName);
-                    } catch (e) {
-                        modalBody.innerHTML += `<div style="color:var(--red);margin-top:8px">Failed: ${e}</div>`;
-                        btnEdit.disabled = false;
-                    }
-                });
-                modalFooter.appendChild(btnEdit);
             }
 
             // ────────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -294,6 +295,86 @@ pub fn get_template_rules(
                 ignore: r.ignore,
             })
             .collect(),
+    })
+}
+
+// ── Folder-template associations ──────────────────────────────────────────────
+
+fn associations_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_data_dir()
+        .map(|d| d.join("associations.json"))
+        .map_err(|e| e.to_string())
+}
+
+fn load_associations(app: &tauri::AppHandle) -> Result<HashMap<String, String>, String> {
+    let path = associations_file(app)?;
+    if !path.exists() {
+        return Ok(HashMap::new());
+    }
+    let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&raw).map_err(|e| e.to_string())
+}
+
+fn save_associations(app: &tauri::AppHandle, map: &HashMap<String, String>) -> Result<(), String> {
+    let path = associations_file(app)?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let json = serde_json::to_string_pretty(map).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| e.to_string())
+}
+
+/// Return the template name linked to a folder, or None if unlinked.
+#[tauri::command]
+pub async fn get_folder_association(
+    app: tauri::AppHandle,
+    folder_path: String,
+) -> Result<Option<String>, String> {
+    let map = load_associations(&app)?;
+    Ok(map.get(&folder_path).cloned())
+}
+
+/// Persist a folder → template association.
+#[tauri::command]
+pub async fn set_folder_association(
+    app: tauri::AppHandle,
+    folder_path: String,
+    template_name: String,
+) -> Result<(), String> {
+    let mut map = load_associations(&app)?;
+    map.insert(folder_path, template_name);
+    save_associations(&app, &map)
+}
+
+/// Remove the association for a folder.
+#[tauri::command]
+pub async fn remove_folder_association(
+    app: tauri::AppHandle,
+    folder_path: String,
+) -> Result<(), String> {
+    let mut map = load_associations(&app)?;
+    map.remove(&folder_path);
+    save_associations(&app, &map)
+}
+
+/// Run (or dry-run) using a named template from app data dir.
+#[tauri::command]
+pub fn run_with_template(
+    app: tauri::AppHandle,
+    folder_path: String,
+    template_name: String,
+    dry_run: bool,
+) -> Result<CleanResult, String> {
+    let target = PathBuf::from(&folder_path);
+    let template_path = templates_dir(&app)?.join(format!("{template_name}.toml"));
+    let cfg = config::load_config(&template_path).map_err(|e| e.to_string())?;
+    let config_name = format!("{template_name}.toml");
+    let summary = engine::run(&target, &cfg, &config_name, dry_run).map_err(|e| e.to_string())?;
+    Ok(CleanResult {
+        messages: summary.messages,
+        moved: summary.moved,
+        errors: summary.errors,
     })
 }
 
