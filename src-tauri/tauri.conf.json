@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Folder Cleaner",
-  "version": "0.1.0",
-  "identifier": "com.folder-cleaner.app",
+  "productName": "Drust Cleaner",
+  "version": "1.0.0",
+  "identifier": "com.drust-cleaner.app",
   "build": {
     "frontendDist": "../dist"
   },

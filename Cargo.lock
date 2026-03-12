@@ -404,7 +404,7 @@ checksum = "3a822ea5bc7590f9d40f1ba12c0dc3c2760f3482c6984db1573ad11031420831"
 
 [[package]]
 name = "cleaner-cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -414,7 +414,7 @@ dependencies = [
 
 [[package]]
 name = "cleaner-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "glob",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "cleaner-gui"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "cleaner-core",
  "serde",

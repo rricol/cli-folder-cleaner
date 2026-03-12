@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Folder Cleaner</title>
+  <title>Drust Cleaner</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -949,13 +949,35 @@
     .log-stat-value.green  { color: var(--green); }
     .log-stat-value.red    { color: var(--red); }
     .log-stat-label { font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0 24px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    footer a {
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    footer a:hover { color: var(--text); }
   </style>
 </head>
 <body>
 
 <header>
   <img src="icon.png" width="28" height="28" style="border-radius:6px;flex-shrink:0" />
-  <h1>Folder Cleaner</h1>
+  <h1>Drust Cleaner</h1>
   <nav class="tab-nav">
     <button class="tab-btn active" data-view="cleaner">Cleaner</button>
     <button class="tab-btn"        data-view="templates">Templates</button>
@@ -1093,6 +1115,11 @@
     <div id="modal-footer" style="display:none;padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0;gap:8px;justify-content:flex-end;"></div>
   </div>
 </div>
+
+<footer>
+  <span>Drust Cleaner v1.0.0</span>
+  <a href="https://github.com/rricol/cli-folder-cleaner" target="_blank">github.com/rricol/cli-folder-cleaner ↗</a>
+</footer>
 
 <script>
   const { invoke } = window.__TAURI__.core;

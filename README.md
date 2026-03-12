@@ -1,4 +1,4 @@
-# Folder Cleaner
+# Drust Cleaner
 
 A rule-driven file organiser written in Rust, available as both a **CLI tool** and a **desktop GUI app**. Point it at a directory, define rules in a TOML file, and it moves files into sub-folders automatically.
 
