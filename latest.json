@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "notes": "Initial release of Drust Cleaner desktop app.",
   "pub_date": "2026-03-12T14:35:57Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRktKVHRIYktWQUZTL21nVkZCUjJ3dWs5YnNUN0tYK2RtdWZrbWxEWFVQVVNyODMvay9Sd3pmbWpSTlV4YlpVUGI4OTBLNFJUc05ZTkhGNTB4dXEya3hxODZVcklFcXdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMzI2MDY0CWZpbGU6RHJ1c3QgQ2xlYW5lci5hcHAudGFyLmd6CmJ3S3dYbWxrN3lRUU1rZW1neGYyZWhjYU9JVkNmY2RnNm9SN0Q3dlAvS3Zkd1JiV0d0LzA2UTBmT09kQldDbWJsUXI2OVNvVUtiVlovUWQ4eDBGZkJRPT0K",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRktKVHRIYktWQURxS3pOOUNpZysyUXZnVTNPcXVJbHBZamxtaEgxWFdPbEFSa0d3ajNraWo0WjBKK2RtK0I3TWJ5OFlKQnZSZWQzU0pQUkQ3UjByMlh1YmJrbkhDTkF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMzI4OTI1CWZpbGU6RHJ1c3QgQ2xlYW5lci5hcHAudGFyLmd6CkxDNTJiY3QxQUdrb0JjNmk3bWp4ZEpCbUVpQmxudmdJTzNIRFpBQkx4WGhmMVcxRWVNS0tGd1h5dk91R1BWUmFXTkJCRi9adk9Wek52ekNvVUxIYUNBPT0K",
       "url": "https://github.com/rricol/drust-cleaner/releases/download/v1.0.0/Drust.Cleaner.app.tar.gz"
     }
   }
