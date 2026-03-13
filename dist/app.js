@@ -578,6 +578,7 @@ async function selectFolder(path) {
   clearLog();
   setConfigStatus("");
   document.getElementById("config-card").style.display = "block";
+  selectedTemplate = null;
   await loadFolderAssociation();
   await loadTemplateDropdown();
   updateFavToggle();
