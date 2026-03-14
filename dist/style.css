@@ -89,15 +89,6 @@ html[data-accent="amber"] {
     --accent2-icon: #fbbf24;
     --accent-chip-text: #fde68a;
 }
-/* Light mode accent2 override stays readable */
-html[data-theme="light"][data-accent="violet"],
-html[data-theme="light"][data-accent="blue"],
-html[data-theme="light"][data-accent="teal"],
-html[data-theme="light"][data-accent="green"],
-html[data-theme="light"][data-accent="amber"] {
-    --accent2-icon: var(--accent2);
-}
-
 /* ── Light theme ── */
 html[data-theme="light"] {
     --bg: #f0f0f6;
@@ -105,8 +96,7 @@ html[data-theme="light"] {
     --border: #d0d0e0;
     --text: #1a1a2e;
     --text-dim: #5a6070;
-    --accent2: #6d4cc0;
-    --accent2-icon: #6d4cc0;
+    --accent2-icon: var(--accent2);
 }
 @media (prefers-color-scheme: light) {
     html[data-theme="system"] {
@@ -115,8 +105,7 @@ html[data-theme="light"] {
         --border: #d0d0e0;
         --text: #1a1a2e;
         --text-dim: #5a6070;
-        --accent2: #6d4cc0;
-        --accent2-icon: #6d4cc0;
+        --accent2-icon: var(--accent2);
     }
 }
 
