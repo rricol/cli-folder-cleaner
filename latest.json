@@ -1,11 +1,11 @@
 {
-  "version": "1.2.0",
-  "notes": "UI redesign, folder favorites, split CSS/JS, and various fixes.",
-  "pub_date": "2026-03-13T00:00:00Z",
+  "version": "1.5.0",
+  "notes": "Run history, undo runs, source path in output log, and smart skip for files already at destination.",
+  "pub_date": "2026-03-14T00:00:00Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRktKVHRIYktWQVBPR25VT2lRTnhpUXlEZFR0WVFjcVVjc2YrVloxdnFwT2svSkIyRE9aMzB0OHdwZTNmRFBsWjJzWjdlbVpBeE00Sm9sK1A0TUpvV2xKWnZKRFdHNndzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczNDAwMjkyCWZpbGU6RHJ1c3QgQ2xlYW5lci5hcHAudGFyLmd6CnphL01ES0srdnVrOVk3Smp0VlBUQkQvdU1yWExhYk96OFFBWUxReWQ2dUlkZE5VdThScXdZdXpuUkRYNGVudmkxOU9xUitjN3U1dFZHZVE1eWJKaEFnPT0K",
-      "url": "https://github.com/rricol/drust-cleaner/releases/download/v1.2.0/Drust.Cleaner.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRRktKVHRIYktWQUJqUUxUejhvWmlaalZCaDlZWlNhTjQ4S0pVb0Y1WE1seEpuOG4yd2pkNzdZbTJkYXM2V1B4N2huM0wvQ2tJRXdpdVpMR1YwWGN1NXFmSHNWa0xjS3dBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczNDkxNjU5CWZpbGU6RHJ1c3QgQ2xlYW5lci5hcHAudGFyLmd6Cm9rOVFQWlpNUk1xY1Z5b0FSWmVoSkxaV21RUXFGVUVuS1MwSTBhdWJYWVJRK3BGQys3aFlLL0ZCdkNEK3o0WkU0MHFlQk4wQTFhOENNcVpBRmdpckJBPT0K",
+      "url": "https://github.com/rricol/drust-cleaner/releases/download/v1.5.0/Drust.Cleaner.app.tar.gz"
     }
   }
 }
