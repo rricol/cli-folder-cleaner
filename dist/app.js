@@ -124,6 +124,10 @@ const TRANSLATIONS = {
     noHistory: "No runs yet.",
     clearHistory: "Clear history",
     clearHistoryConfirm: "Clear all run history?",
+    undoRun: "Undo",
+    undoneLabel: "Undone",
+    undoConfirm: "Undo this run? Files will be moved back to their original locations.",
+    undoSuccess: "{0} file(s) restored.",
   },
   fr: {
     tabCleaner: "Nettoyeur",
@@ -246,6 +250,10 @@ const TRANSLATIONS = {
     noHistory: "Aucun run pour l'instant.",
     clearHistory: "Effacer l'historique",
     clearHistoryConfirm: "Effacer tout l'historique ?",
+    undoRun: "Annuler",
+    undoneLabel: "Annulé",
+    undoConfirm: "Annuler ce run ? Les fichiers seront remis à leur emplacement d'origine.",
+    undoSuccess: "{0} fichier(s) restauré(s).",
   },
 };
 
@@ -332,9 +340,11 @@ const statDeleted = document.getElementById("stat-deleted");
 const statDeletedWrap = document.getElementById("stat-deleted-wrap");
 const statErrors = document.getElementById("stat-errors");
 const statUnmatched = document.getElementById("stat-unmatched");
+const btnUndoRun = document.getElementById("btn-undo-run");
 
 let linkedTemplate = null; // String | null — persisted association
 let selectedTemplate = null; // String | null — dropdown selection (unlinked state)
+let lastRunId = null; // u128 | null — id of last real run, for inline undo
 
 function setConfigStatus(msg, type) {
   const el = document.getElementById("config-status");
@@ -346,6 +356,8 @@ function clearLog() {
   logOutput.textContent = "";
   logCard.classList.remove("visible");
   logSummary.style.display = "none";
+  btnUndoRun.style.display = "none";
+  lastRunId = null;
 }
 
 function baseName(p) {
@@ -366,6 +378,7 @@ function buildLogEntry(msg) {
   const movedMatch = msg.match(/^MOVED (.+) → (.+)  \(rule: (.+)\)$/);
   const trashedMatch = msg.match(/^TRASHED (.+)  \(rule: (.+)\)$/);
   const movedUnmatch = msg.match(/^MOVED \(unmatched\) (.+) → (.+)$/);
+  const restoredMatch = msg.match(/^RESTORED (.+) → (.+)$/);
   const errorMatch = msg.match(/^ERROR (.+): (.+)$/);
   const unmatchedMatch = msg.match(/^UNMATCHED (.+)$/);
 
@@ -380,7 +393,7 @@ function buildLogEntry(msg) {
           `<span class="log-filename">${escHtml(baseName(src))}</span>` +
           `<span class="log-rule-tag log-rule-tag-trash">${escHtml(rule)}</span>` +
         `</span>` +
-        `<span class="log-dest">${isDry ? "→ Trash (dry run)" : "→ Trash"}</span>` +
+        `<span class="log-dest"><span class="log-src">${escHtml(parentDir(src))}</span> → Trash${isDry ? " (dry run)" : ""}</span>` +
       `</span>`;
   } else if (dryMatch || movedMatch) {
     const [, src, dst, rule] = dryMatch || movedMatch;
@@ -393,7 +406,7 @@ function buildLogEntry(msg) {
           `<span class="log-filename">${escHtml(baseName(src))}</span>` +
           `<span class="log-rule-tag">${escHtml(rule)}</span>` +
         `</span>` +
-        `<span class="log-dest">→ ${escHtml(parentDir(dst))}</span>` +
+        `<span class="log-dest"><span class="log-src">${escHtml(parentDir(src))}</span> → ${escHtml(parentDir(dst))}</span>` +
       `</span>`;
   } else if (movedUnmatch) {
     const [, src, dst] = movedUnmatch;
@@ -405,7 +418,19 @@ function buildLogEntry(msg) {
           `<span class="log-filename">${escHtml(baseName(src))}</span>` +
           `<span class="log-rule-tag log-rule-tag-other">other</span>` +
         `</span>` +
-        `<span class="log-dest">→ ${escHtml(parentDir(dst))}</span>` +
+        `<span class="log-dest"><span class="log-src">${escHtml(parentDir(src))}</span> → ${escHtml(parentDir(dst))}</span>` +
+      `</span>`;
+  } else if (restoredMatch) {
+    const [, from, to] = restoredMatch;
+    div.className = "log-entry log-entry-moved";
+    div.innerHTML =
+      `<span class="log-prefix">↩</span>` +
+      `<span class="log-body">` +
+        `<span class="log-row1">` +
+          `<span class="log-filename">${escHtml(baseName(to))}</span>` +
+          `<span class="log-rule-tag log-rule-tag-other">restored</span>` +
+        `</span>` +
+        `<span class="log-dest"><span class="log-src">${escHtml(parentDir(from))}</span> → ${escHtml(parentDir(to))}</span>` +
       `</span>`;
   } else if (errorMatch) {
     const [, src, errMsg] = errorMatch;
@@ -736,6 +761,13 @@ async function runWithTemplate(dryRun) {
     logRunBadge.className =
       "run-badge " + (dryRun ? "dry" : hasErr ? "err" : "run");
     logSummary.style.display = "flex";
+    if (!dryRun && result.run_id && result.moved > 0) {
+      lastRunId = result.run_id;
+      btnUndoRun.style.display = "";
+    } else {
+      lastRunId = null;
+      btnUndoRun.style.display = "none";
+    }
     if (hasErr && !dryRun) {
       setConfigStatus(t("doneWithErrors", result.errors), "err");
     } else {
@@ -748,6 +780,28 @@ async function runWithTemplate(dryRun) {
     updateLinkBtn();
   }
 }
+
+// ── Inline undo (cleaner page) ────────────────────────────────────────────
+btnUndoRun.addEventListener("click", async () => {
+  if (!lastRunId || !confirm(t("undoConfirm"))) return;
+  const idToUndo = lastRunId;
+  clearLog();
+  logCard.classList.add("visible");
+  try {
+    const result = await invoke("undo_run", { id: idToUndo });
+    for (const msg of result.messages) appendLog(msg);
+    statMoved.textContent = result.moved;
+    statDeleted.textContent = 0;
+    statDeletedWrap.style.display = "none";
+    statErrors.textContent = result.errors;
+    statUnmatched.textContent = 0;
+    logRunBadge.textContent = t("undoneLabel");
+    logRunBadge.className = "run-badge " + (result.errors > 0 ? "err" : "run");
+    logSummary.style.display = "flex";
+  } catch (e) {
+    appendLog(t("errorLog", e));
+  }
+});
 
 // ── Modal ────────────────────────────────────────────────────────────────
 const modalBackdrop = document.getElementById("modal-backdrop");
@@ -1750,7 +1804,7 @@ function renderHistory(entries) {
 
   entries.forEach((entry) => {
     const card = document.createElement("div");
-    card.className = "history-card";
+    card.className = "history-card" + (entry.undone ? " undone" : "");
 
     const date = new Date(Number(entry.id)).toLocaleString();
     const folder = baseName(entry.folder_path);
@@ -1778,8 +1832,32 @@ function renderHistory(entries) {
       `</div>` +
       `<div class="history-log"></div>`;
 
+    const header = card.querySelector(".history-card-header");
+
+    if (entry.undone) {
+      const badge = document.createElement("span");
+      badge.className = "history-badge-undone";
+      badge.textContent = t("undoneLabel");
+      header.appendChild(badge);
+    } else if (entry.moves && entry.moves.length > 0) {
+      const btnUndo = document.createElement("button");
+      btnUndo.className = "btn-undo";
+      btnUndo.textContent = t("undoRun");
+      btnUndo.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!confirm(t("undoConfirm"))) return;
+        try {
+          await invoke("undo_run", { id: entry.id });
+          loadHistory();
+        } catch (err) {
+          alert(err);
+        }
+      });
+      header.appendChild(btnUndo);
+    }
+
     const logDiv = card.querySelector(".history-log");
-    card.querySelector(".history-card-header").addEventListener("click", () => {
+    header.addEventListener("click", () => {
       const expanded = card.classList.toggle("expanded");
       if (expanded && logDiv.childElementCount === 0) {
         entry.messages.forEach((msg) => logDiv.appendChild(buildLogEntry(msg)));

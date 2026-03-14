@@ -8,10 +8,17 @@ use tauri_plugin_updater::UpdaterExt;
 
 use cleaner_core::{config, engine};
 
+/// A single file move record for undo support.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MoveRecord {
+    pub src: String,
+    pub dst: String,
+}
+
 /// One entry in the persistent run history.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RunHistoryEntry {
-    pub id: u128,
+    pub id: u64,
     pub folder_path: String,
     pub template_name: String,
     pub moved: usize,
@@ -19,6 +26,10 @@ pub struct RunHistoryEntry {
     pub errors: usize,
     pub unmatched: usize,
     pub messages: Vec<String>,
+    #[serde(default)]
+    pub moves: Vec<MoveRecord>,
+    #[serde(default)]
+    pub undone: bool,
 }
 
 const MAX_HISTORY: usize = 100;
@@ -48,6 +59,8 @@ pub struct CleanResult {
     pub deleted: usize,
     pub errors: usize,
     pub unmatched: usize,
+    /// History entry id for real runs (None for dry runs).
+    pub run_id: Option<u64>,
 }
 
 /// Info about an available update returned to the frontend.
@@ -164,6 +177,7 @@ pub fn run_cleaner(folder_path: String, dry_run: bool) -> Result<CleanResult, St
         deleted: summary.deleted,
         errors: summary.errors,
         unmatched: summary.unmatched,
+        run_id: None,
     })
 }
 
@@ -489,12 +503,13 @@ pub fn run_with_template(
     let template_path = templates_dir(&app)?.join(format!("{template_name}.toml"));
     let cfg = config::load_config(&template_path).map_err(|e| e.to_string())?;
     let summary = engine::run(&target, &cfg, "cleaner.toml", dry_run).map_err(|e| e.to_string())?;
-    let result = CleanResult {
+    let mut result = CleanResult {
         messages: summary.messages,
         moved: summary.moved,
         deleted: summary.deleted,
         errors: summary.errors,
         unmatched: summary.unmatched,
+        run_id: None,
     };
     if !dry_run {
         let data_dir = app.path().app_data_dir().unwrap_or_default();
@@ -502,7 +517,7 @@ pub fn run_with_template(
         let id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_millis();
+            .as_millis() as u64;
         history.insert(0, RunHistoryEntry {
             id,
             folder_path: folder_path.clone(),
@@ -512,9 +527,15 @@ pub fn run_with_template(
             errors: result.errors,
             unmatched: result.unmatched,
             messages: result.messages.clone(),
+            moves: summary.moves.iter().map(|(s, d)| MoveRecord {
+                src: s.to_string_lossy().into_owned(),
+                dst: d.to_string_lossy().into_owned(),
+            }).collect(),
+            undone: false,
         });
         history.truncate(MAX_HISTORY);
         save_history(&data_dir, &history);
+        result.run_id = Some(id);
     }
     Ok(result)
 }
@@ -530,6 +551,88 @@ pub fn clear_run_history(app: tauri::AppHandle) -> Result<(), String> {
     let data_dir = app.path().app_data_dir().unwrap_or_default();
     save_history(&data_dir, &[]);
     Ok(())
+}
+
+#[tauri::command]
+pub fn undo_run(app: tauri::AppHandle, id: u64) -> Result<CleanResult, String> {
+    let data_dir = app.path().app_data_dir().unwrap_or_default();
+    let mut history = load_history(&data_dir);
+    let entry = history
+        .iter_mut()
+        .find(|e| e.id == id)
+        .ok_or_else(|| "Run not found".to_string())?;
+
+    let mut moved = 0usize;
+    let mut errors = 0usize;
+    let mut messages = Vec::new();
+
+    let moves: Vec<MoveRecord> = entry.moves.clone();
+    for record in moves.iter().rev() {
+        let src = std::path::Path::new(&record.src);
+        let dst = std::path::Path::new(&record.dst);
+        if !dst.exists() {
+            messages.push(format!("SKIP (not found) {}", dst.display()));
+            errors += 1;
+            continue;
+        }
+        if let Some(parent) = src.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        let result = std::fs::rename(dst, src).or_else(|_| {
+            std::fs::copy(dst, src)
+                .map(|_| ())
+                .and_then(|_| std::fs::remove_file(dst))
+        });
+        match result {
+            Ok(()) => {
+                messages.push(format!(
+                    "RESTORED {} → {}",
+                    dst.display(),
+                    src.display()
+                ));
+                moved += 1;
+            }
+            Err(e) => {
+                messages.push(format!("ERROR {}: {}", dst.display(), e));
+                errors += 1;
+            }
+        }
+    }
+
+    // Clean up empty destination directories created during the run.
+    // Walk up from each dst's parent to (but not including) the target root,
+    // collect all candidate dirs, then try removing deepest-first.
+    let target = std::path::Path::new(&entry.folder_path);
+    let mut dirs: std::collections::BTreeSet<std::path::PathBuf> = std::collections::BTreeSet::new();
+    for record in &entry.moves {
+        let mut current = std::path::Path::new(&record.dst).parent();
+        while let Some(dir) = current {
+            if dir == target || !dir.starts_with(target) {
+                break;
+            }
+            dirs.insert(dir.to_path_buf());
+            current = dir.parent();
+        }
+    }
+    let mut dirs_vec: Vec<_> = dirs.into_iter().collect();
+    dirs_vec.sort_by(|a, b| b.components().count().cmp(&a.components().count()));
+    for dir in &dirs_vec {
+        if std::fs::remove_dir(dir).is_ok() {
+            messages.push(format!("REMOVED empty dir {}", dir.display()));
+        }
+    }
+
+    entry.undone = true;
+    save_history(&data_dir, &history);
+
+    Ok(CleanResult {
+        messages,
+        moved,
+        deleted: 0,
+        errors,
+        unmatched: 0,
+        run_id: None,
+    })
 }
 
 const DEFAULT_CONFIG_TEMPLATE: &str = r#"# cleaner.toml — generated by Folder Cleaner GUI

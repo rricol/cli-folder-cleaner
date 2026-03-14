@@ -247,6 +247,7 @@ pub fn run() {
             commands::run_with_template,
             commands::get_run_history,
             commands::clear_run_history,
+            commands::undo_run,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

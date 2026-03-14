@@ -31,6 +31,8 @@ pub struct RunSummary {
     pub unmatched: usize,
     /// Log messages produced during the run (plain text, no ANSI codes).
     pub messages: Vec<String>,
+    /// (src, dst) for each successfully moved file (excludes trashed files).
+    pub moves: Vec<(PathBuf, PathBuf)>,
 }
 
 /// A single planned file operation.
@@ -104,6 +106,7 @@ pub fn run(
                         action.destination.display(),
                         action.rule_name,
                     ));
+                    summary.moves.push((action.source.clone(), action.destination.clone()));
                     summary.moved += 1;
                 }
                 Err(e) => {
@@ -119,41 +122,52 @@ pub fn run(
     }
 
     // Process unmatched files
-    summary.unmatched = unmatched_paths.len();
-
-    if config.settings.unmatched_destination.is_some() && !dry_run {
-        // Move unmatched files to the catch-all folder
-        let dest_name = config.settings.unmatched_destination.as_deref().unwrap();
+    if let Some(dest_name) = &config.settings.unmatched_destination {
         for file in &unmatched_paths {
             let dest = build_destination(target_dir, file, dest_name)?;
-            let action = FileAction {
-                source: file.clone(),
-                destination: dest,
-                rule_name: "<unmatched>".to_string(),
-                delete: false,
-            };
-            match execute_move(&action) {
-                Ok(()) => {
-                    summary.messages.push(format!(
-                        "MOVED (unmatched) {} → {}",
-                        action.source.display(),
-                        action.destination.display(),
-                    ));
-                    summary.moved += 1;
-                }
-                Err(e) => {
-                    summary.messages.push(format!(
-                        "ERROR {}: {}",
-                        action.source.display(),
-                        e,
-                    ));
-                    summary.errors += 1;
+            // Skip files already in the unmatched destination folder
+            if file.parent() == dest.parent() {
+                continue;
+            }
+            if dry_run {
+                summary.messages.push(format!(
+                    "[DRY-RUN] {} → {}  (rule: <unmatched>)",
+                    file.display(),
+                    dest.display(),
+                ));
+                summary.moved += 1;
+            } else {
+                let action = FileAction {
+                    source: file.clone(),
+                    destination: dest,
+                    rule_name: "<unmatched>".to_string(),
+                    delete: false,
+                };
+                match execute_move(&action) {
+                    Ok(()) => {
+                        summary.messages.push(format!(
+                            "MOVED (unmatched) {} → {}",
+                            action.source.display(),
+                            action.destination.display(),
+                        ));
+                        summary.moves.push((action.source.clone(), action.destination.clone()));
+                        summary.moved += 1;
+                    }
+                    Err(e) => {
+                        summary.messages.push(format!(
+                            "ERROR {}: {}",
+                            action.source.display(),
+                            e,
+                        ));
+                        summary.errors += 1;
+                    }
                 }
             }
         }
         summary.unmatched = 0;
     } else {
-        // Log unmatched files so the user can see what wasn't sorted
+        // No catch-all: count and log unmatched files
+        summary.unmatched = unmatched_paths.len();
         for path in &unmatched_paths {
             summary.messages.push(format!("UNMATCHED {}", path.display()));
         }
