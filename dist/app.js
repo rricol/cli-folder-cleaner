@@ -120,6 +120,10 @@ const TRANSLATIONS = {
     moveAction: "Move",
     trashAction: "Trash",
     deletedStat: "trashed",
+    tabHistory: "History",
+    noHistory: "No runs yet.",
+    clearHistory: "Clear history",
+    clearHistoryConfirm: "Clear all run history?",
   },
   fr: {
     tabCleaner: "Nettoyeur",
@@ -238,6 +242,10 @@ const TRANSLATIONS = {
     moveAction: "Déplacer",
     trashAction: "Corbeille",
     deletedStat: "corbeillés",
+    tabHistory: "Historique",
+    noHistory: "Aucun run pour l'instant.",
+    clearHistory: "Effacer l'historique",
+    clearHistoryConfirm: "Effacer tout l'historique ?",
   },
 };
 
@@ -303,7 +311,11 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     document
       .getElementById("view-templates")
       .classList.toggle("active", view === "templates");
+    document
+      .getElementById("view-history")
+      .classList.toggle("active", view === "history");
     if (view === "templates") loadTmplList();
+    if (view === "history") loadHistory();
   });
 });
 
@@ -892,7 +904,6 @@ document.querySelectorAll(".tmpl-tab").forEach((tab) => {
     document
       .getElementById(`tmpl-tab-${tab.dataset.tab}`)
       ?.classList.add("active");
-    btnAddRule.style.display = tab.dataset.tab === "rules" ? "" : "none";
   });
 });
 
@@ -1002,7 +1013,6 @@ function showTmplForm() {
   tmplPlaceholder.style.display = "none";
   tmplForm.classList.add("visible");
   tmplFooter.style.display = "flex";
-  btnAddRule.style.display = document.querySelector('.tmpl-tab[data-tab="rules"].active') ? "" : "none";
 }
 
 function hideTmplForm() {
@@ -1396,6 +1406,15 @@ function makeIgnoreChip(pattern, idx) {
 
 // ── Add rule ───────────────────────────────────────────────────────────────
 btnAddRule.addEventListener("click", () => {
+  // Switch to rules tab if not already active
+  const rulesTab = document.querySelector('.tmpl-tab[data-tab="rules"]');
+  if (rulesTab && !rulesTab.classList.contains("active")) {
+    document.querySelectorAll(".tmpl-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".tmpl-tab-content").forEach((c) => c.classList.remove("active"));
+    rulesTab.classList.add("active");
+    document.getElementById("tmpl-tab-rules")?.classList.add("active");
+  }
+
   tmplRules.push({
     name: "",
     destination: "",
@@ -1408,9 +1427,14 @@ btnAddRule.addEventListener("click", () => {
   });
   renderRules();
   setTmplDirty(true);
-  // Focus new rule's name input
-  const cards = tmplRulesList.querySelectorAll(".rule-name-inp");
-  cards[cards.length - 1]?.focus();
+
+  // Focus and scroll to the new rule's name input
+  const nameInputs = tmplRulesList.querySelectorAll(".rule-name-inp");
+  const lastInput = nameInputs[nameInputs.length - 1];
+  if (lastInput) {
+    lastInput.focus();
+    lastInput.closest(".rule-editor-card")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 });
 
 // ── Delete template ────────────────────────────────────────────────────────
@@ -1706,3 +1730,73 @@ setTimeout(checkForUpdate, 3000);
 
 // Load favorites on startup
 loadFavorites();
+
+// ────────────────────────────────────────────────────────────────────────────
+// HISTORY VIEW
+// ────────────────────────────────────────────────────────────────────────────
+const historyList = document.getElementById("history-list");
+const historyEmpty = document.getElementById("history-empty");
+const btnClearHistory = document.getElementById("btn-clear-history");
+
+function renderHistory(entries) {
+  historyList.innerHTML = "";
+  if (!entries || entries.length === 0) {
+    historyList.style.display = "none";
+    historyEmpty.style.display = "flex";
+    return;
+  }
+  historyList.style.display = "flex";
+  historyEmpty.style.display = "none";
+
+  entries.forEach((entry) => {
+    const card = document.createElement("div");
+    card.className = "history-card";
+
+    const date = new Date(Number(entry.id)).toLocaleString();
+    const folder = baseName(entry.folder_path);
+
+    const statsHtml = [
+      entry.moved > 0
+        ? `<span class="history-stat history-stat-moved">${entry.moved} ${t("moved")}</span>`
+        : "",
+      entry.deleted > 0
+        ? `<span class="history-stat history-stat-deleted">${entry.deleted} ${t("deletedStat")}</span>`
+        : "",
+      entry.errors > 0
+        ? `<span class="history-stat history-stat-error">${entry.errors} ${t("errors")}</span>`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("");
+
+    card.innerHTML =
+      `<div class="history-card-header">` +
+        `<span class="history-date">${escHtml(date)}</span>` +
+        `<span class="history-folder" title="${escHtml(entry.folder_path)}">${escHtml(folder)}</span>` +
+        `<span class="history-template">${escHtml(entry.template_name)}</span>` +
+        `<span class="history-stats">${statsHtml}</span>` +
+      `</div>` +
+      `<div class="history-log"></div>`;
+
+    const logDiv = card.querySelector(".history-log");
+    card.querySelector(".history-card-header").addEventListener("click", () => {
+      const expanded = card.classList.toggle("expanded");
+      if (expanded && logDiv.childElementCount === 0) {
+        entry.messages.forEach((msg) => logDiv.appendChild(buildLogEntry(msg)));
+      }
+    });
+
+    historyList.appendChild(card);
+  });
+}
+
+async function loadHistory() {
+  const entries = await invoke("get_run_history");
+  renderHistory(entries);
+}
+
+btnClearHistory.addEventListener("click", async () => {
+  if (!confirm(t("clearHistoryConfirm"))) return;
+  await invoke("clear_run_history");
+  renderHistory([]);
+});

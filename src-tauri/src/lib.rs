@@ -245,6 +245,8 @@ pub fn run() {
             commands::set_folder_association,
             commands::remove_folder_association,
             commands::run_with_template,
+            commands::get_run_history,
+            commands::clear_run_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -436,7 +436,7 @@ dependencies = [
 
 [[package]]
 name = "cleaner-gui"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "cleaner-core",
  "serde",

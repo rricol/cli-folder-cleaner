@@ -36,6 +36,13 @@
                 >
                     Templates
                 </button>
+                <button
+                    class="tab-btn"
+                    data-view="history"
+                    data-i18n="tabHistory"
+                >
+                    History
+                </button>
             </nav>
         </header>
 
@@ -463,10 +470,9 @@
                 <!-- Fixed footer -->
                 <div id="tmpl-footer" style="display:none">
                     <button
-                        class="btn btn-outline btn-sm"
+                        class="btn btn-outline"
                         id="btn-add-rule"
                         data-i18n="addRule"
-                        style="display:none"
                     >
                         + Add Rule
                     </button>
@@ -481,6 +487,17 @@
             </div>
         </div>
         <!-- #view-templates -->
+
+        <!-- ══════════════ HISTORY VIEW ══════════════ -->
+        <div id="view-history" class="view">
+            <div id="history-header">
+                <span id="history-title" data-i18n="tabHistory">History</span>
+                <button class="btn btn-outline btn-sm" id="btn-clear-history" data-i18n="clearHistory">Clear history</button>
+            </div>
+            <div id="history-list"></div>
+            <div id="history-empty" data-i18n="noHistory">No runs yet.</div>
+        </div>
+        <!-- #view-history -->
 
         <!-- View rules modal (used from cleaner page) -->
         <div id="modal-backdrop">
