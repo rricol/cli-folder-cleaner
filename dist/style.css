@@ -536,6 +536,9 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 1px;
+    /* Keep dark-mode text colors regardless of theme — background is always dark */
+    --text: #eaeaea;
+    --text-dim: #8892a4;
 }
 
 .log-entry {
